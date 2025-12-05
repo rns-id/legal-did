@@ -1451,6 +1451,7 @@ dependencies = [
  "mpl-token-metadata",
  "proc-macro-crate 1.2.1",
  "sha2 0.9.9",
+ "shared-utils",
  "solana-program",
  "spl-account-compression",
 ]
@@ -1612,6 +1613,16 @@ dependencies = [
  "quote",
  "serde",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "shared-utils"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "mpl-bubblegum",
+ "mpl-token-metadata",
 ]
 
 [[package]]
