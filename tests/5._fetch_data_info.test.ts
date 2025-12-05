@@ -1,7 +1,7 @@
 // import {
 //   setProvider,
 //   AnchorProvider,
-// } from '@project-serum/anchor'
+// } from '@coral-xyz/anchor'
 
 // import { getCollectionMintAddress, getAccountNFTs } from './utils/utils'
 // import { USER_WALLET } from "./utils/constants";

@@ -24,7 +24,7 @@ pub struct AuthorizeMintContext<'info> {
 
     #[account(
         mut,
-        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_ref()],
+        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
         bump=non_transferable_project.bump
     )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
@@ -40,7 +40,7 @@ pub struct AuthorizeMintContext<'info> {
         1 +         // is_authorized
         1,          // bump
         seeds = [
-            NON_TRANSFERABLE_NFT_USERSTATUS_PREFIX.as_ref(),
+            NON_TRANSFERABLE_NFT_USERSTATUS_PREFIX.as_bytes(),
             &hash_seed(&rns_id)[..32],
             wallet.key().as_ref()
         ],
@@ -93,7 +93,7 @@ pub fn handler(
     require!(!status.is_authorized, ErrorCode::LDIDHasAuthorized);
 
     status.authority = *ctx.accounts.authority.key;
-    status.bump = *ctx.bumps.get("non_transferable_user_status").unwrap();
+    status.bump = ctx.bumps.non_transferable_user_status;
     status.is_authorized = true;
 
     emit!(AuthorizeMintEvent {

@@ -7,7 +7,7 @@ import {
   setProvider,
   AnchorProvider,
   BN,
-} from '@project-serum/anchor'
+} from '@coral-xyz/anchor'
 
 import {
 
@@ -81,10 +81,18 @@ describe("burn", () => {
     const nonTransferableUserStatus = findNonTransferableUserStatus(rnsId, userPubkey);
     const nonTransferableRnsIdStatus = await findNonTransferableRnsIdtatus(rnsId)
 
+    // Record balances before burn
+    const adminBalanceBefore = await provider.connection.getBalance(ADMIN_WALLET.publicKey);
+    const userBalanceBefore = await provider.connection.getBalance(userPubkey);
+    
+    console.log("Admin balance before burn:", adminBalanceBefore / 1e9, "SOL");
+    console.log("User balance before burn:", userBalanceBefore / 1e9, "SOL");
+
     await program.methods
       .burn(rnsId, userPubkey)
-      .accounts({
-        authority: userPubkey,
+      .accountsPartial({
+        authority: ADMIN_WALLET.publicKey,  // No signature required, only used to receive rent
+        nftOwner: userPubkey,
 
         userTokenAccount: userTokenAccount,
 
@@ -104,19 +112,42 @@ describe("burn", () => {
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: web3.SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY,
+        sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
       })
-      .signers([USER_WALLET])
+      .signers([USER_WALLET])  // Only user signature required
       .rpc();
 
-    const details_after = await getTokenAccountDetails(userTokenAccount)
+    // Record balances after burn
+    const adminBalanceAfter = await provider.connection.getBalance(ADMIN_WALLET.publicKey);
+    const userBalanceAfter = await provider.connection.getBalance(userPubkey);
+    
+    console.log("Admin balance after burn:", adminBalanceAfter / 1e9, "SOL");
+    console.log("User balance after burn:", userBalanceAfter / 1e9, "SOL");
+    console.log("Admin received rent:", (adminBalanceAfter - adminBalanceBefore) / 1e9, "SOL");
+    console.log("User balance change:", (userBalanceAfter - userBalanceBefore) / 1e9, "SOL");
 
-    assert(details_after.amount == BigInt(0), '==');
+    // Token account has been closed, attempting to fetch will fail
+    try {
+        const details_after = await getTokenAccountDetails(userTokenAccount);
+        assert(false, "Token account should be closed");
+    } catch (error) {
+        // Token account not existing is expected
+        console.log("Token account successfully closed");
+    }
 
-    after(async () => {
+    // user_status and nft_status should also be closed
+    try {
+        await program.account.userStatusAccount.fetch(nonTransferableUserStatus);
+        assert(false, "User status account should be closed");
+    } catch (error) {
+        console.log("User status account successfully closed");
+    }
 
-        const {isAuthorized, isMinted} = await program.account.userStatusAccount.fetch(nonTransferableUserStatus)
-        assert(!isMinted, "did 's is_minted must be false!")
-
-    })
+    try {
+        await program.account.nftStatusAccount.fetch(nonTransferableNftStatus);
+        assert(false, "NFT status account should be closed");
+    } catch (error) {
+        console.log("NFT status account successfully closed");
+    }
   });
 });

@@ -1,19 +1,23 @@
 [workspace]
 members = ["programs/*"]
+resolver = "2"
+
+
 
 [profile.release]
 opt-level = "z"
-lto = true
+lto = "fat"
 overflow-checks = true
 codegen-units = 1
+
 [profile.release.build-override]
+opt-level = "z"
 incremental = false
 
 [workspace.dependencies]
-anchor-lang = { version = "0.26.0", features = ["init-if-needed"]}
-anchor-spl = { version = "0.26.0" }
-mpl-token-metadata = { version = "1.11.0", features = ["no-entrypoint"] }
-mpl-bubblegum = { version = "0.9.2", features = ["no-entrypoint", "cpi"] }
-spl-account-compression = { version = "0.1.2", features = ["no-entrypoint", "cpi"] }
-solana-program = "< 1.15"
-sha2 = "0.9"
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"]}
+anchor-spl = { version = "0.31.1" }
+mpl-token-metadata = "5.1"
+mpl-bubblegum = "1.4.0"
+spl-account-compression = { version = "0.3", features = ["cpi"] }
+sha2 = "0.10"

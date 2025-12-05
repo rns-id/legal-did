@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::rent::Rent;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::spl_token::instruction::freeze_account;
-use anchor_spl::token::{self, spl_token, Mint, MintTo, Token, TokenAccount};
-use mpl_bubblegum::state::metaplex_anchor::MplTokenMetadata;
+use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount};
+use crate::utils::MplTokenMetadata;
 
 use crate::error::ErrorCode;
 use crate::state::*;
@@ -16,7 +15,7 @@ pub struct AirdropEvent {
 }
 
 #[derive(Accounts)]
-#[instruction(rns_id: String, wallet:Pubkey, merkle_root: String, index: String)]
+#[instruction(rns_id: String, wallet: Pubkey, merkle_root: String, index: String)]
 pub struct MintNonTransferableNft<'info> {
   #[account(mut)]
   pub authority: Signer<'info>,
@@ -24,14 +23,14 @@ pub struct MintNonTransferableNft<'info> {
   #[account(
     mut,
     constraint = non_transferable_project.authority == authority.key(),
-    seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_ref()],
+    seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
     bump = non_transferable_project.bump
   )]
   pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
 
   #[account(
     mut,
-    seeds = [NON_TRANSFERABLE_PROJECT_MINT_PREFIX.as_ref()],
+    seeds = [NON_TRANSFERABLE_PROJECT_MINT_PREFIX.as_bytes()],
     bump = non_transferable_project.mint_bump,
   )]
   pub non_transferable_project_mint: Box<Account<'info, Mint>>,
@@ -48,8 +47,8 @@ pub struct MintNonTransferableNft<'info> {
     init_if_needed,
     payer = authority,
     seeds = [
-      NON_TRANSFERABLE_NFT_MINT_PREFIX.as_ref(),
-      index.as_ref()
+      NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(),
+      index.as_bytes()
     ],
     bump,
     mint::decimals = 0,
@@ -80,7 +79,7 @@ pub struct MintNonTransferableNft<'info> {
       1 +         // is_authorized
       1,          // bump
       seeds = [
-          NON_TRANSFERABLE_NFT_USERSTATUS_PREFIX.as_ref(),
+          NON_TRANSFERABLE_NFT_USERSTATUS_PREFIX.as_bytes(),
           &hash_seed(&rns_id)[..32],
           wallet.key().as_ref()
       ],
@@ -96,7 +95,7 @@ pub struct MintNonTransferableNft<'info> {
     8 +
     32,
     seeds = [
-        NON_TRANSFERABLE_NFT_RNSID_PREFIX.as_ref(),
+        NON_TRANSFERABLE_NFT_RNSID_PREFIX.as_bytes(),
         &hash_seed(&rns_id)[..32],
     ],
     bump
@@ -108,10 +107,13 @@ pub struct MintNonTransferableNft<'info> {
     init_if_needed,
     payer = authority,
     space = 8 +
-    400 +
-    32,
+    72 +   // merkle_root (64 hex chars + 4 bytes length prefix)
+    72 +   // rns_id
+    32 +   // authority
+    32 +   // mint
+    1,     // bump
     seeds = [
-        NON_TRANSFERABLE_NFT_STATUS_PREFIX.as_ref(),
+        NON_TRANSFERABLE_NFT_STATUS_PREFIX.as_bytes(),
         non_transferable_nft_mint.key().as_ref()
     ],
     bump
@@ -143,7 +145,7 @@ impl<'info> MintNonTransferableNft<'info> {
   }
 }
 
-pub fn handler(ctx: Context<MintNonTransferableNft>, rns_id: String, wallet:Pubkey, _merkle_root: String, _index: String) -> Result<()> {
+pub fn handler(ctx: Context<MintNonTransferableNft>, rns_id: String, wallet: Pubkey, _merkle_root: String, _index: String) -> Result<()> {
 
   let project_signer_seeds = [
     NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes(),
@@ -174,31 +176,23 @@ pub fn handler(ctx: Context<MintNonTransferableNft>, rns_id: String, wallet:Pubk
 
   msg!("freeze_account start");
 
-  let ix = freeze_account(
-    &spl_token::ID,
-    ctx.accounts.user_token_account.to_account_info().key,
-    ctx.accounts.non_transferable_nft_mint.to_account_info().key,
-    ctx.accounts.non_transferable_project.to_account_info().key,
-    &[ctx.accounts.non_transferable_project.to_account_info().key],
-  )?;
+  let cpi_accounts = token::FreezeAccount {
+    account: ctx.accounts.user_token_account.to_account_info(),
+    mint: ctx.accounts.non_transferable_nft_mint.to_account_info(),
+    authority: ctx.accounts.non_transferable_project.to_account_info(),
+  };
+  let cpi_program = ctx.accounts.token_program.to_account_info();
+  let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+  token::freeze_account(cpi_ctx.with_signer(&[&project_signer_seeds[..]]))?;
 
-  let accounts = [
-    ctx.accounts.user_token_account.to_account_info().clone(),
-    ctx
-      .accounts
-      .non_transferable_nft_mint
-      .to_account_info()
-      .clone(),
-    ctx
-      .accounts
-      .non_transferable_project
-      .to_account_info()
-      .clone(),
-    ctx.accounts.token_program.to_account_info().clone(),
-  ];
-
-  solana_program::program::invoke_signed(&ix, &accounts, &[&project_signer_seeds[..]])?;
   msg!("freeze_account done");
+
+  // Increase RNS ID NFT count
+  ctx.accounts.non_transferable_rns_id_status.num = ctx.accounts.non_transferable_rns_id_status.num
+      .checked_add(1)
+      .ok_or(ErrorCode::Unauthorized)?;
+  
+  msg!("RNS ID status num increased to: {}", ctx.accounts.non_transferable_rns_id_status.num);
 
   emit!(AirdropEvent {
     rns_id: rns_id.clone(),

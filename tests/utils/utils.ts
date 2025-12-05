@@ -1,4 +1,4 @@
-import { web3, workspace, Program, AnchorProvider, setProvider, getProvider } from '@project-serum/anchor'
+import { web3, workspace, Program, AnchorProvider, setProvider, getProvider } from '@coral-xyz/anchor'
 const crypto = require('crypto');
 import {
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
@@ -7,11 +7,11 @@ import {
 } from './constants'
 import { AccountLayout, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAccount, MintLayout } from '@solana/spl-token'
 
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Connection } from '@solana/web3.js';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { fetchAllDigitalAssetByOwner, mplTokenMetadata } from '@metaplex-foundation/mpl-token-metadata'
 
-const connection = getProvider().connection;
+const connection = getProvider().connection as unknown as Connection;
 
 export const createAssociatedTokenAccountInstruction = (
   associatedTokenAddress: web3.PublicKey,
@@ -266,8 +266,8 @@ export const getTokenAccountBalance = async (tokenAccountPubkey: web3.PublicKey)
     throw new Error('Failed to find token account');
   }
 
-  // 解析账户信息
-  const accountData = AccountLayout.decode(tokenAccountInfo.data);
+  // Parse account info
+  const accountData = AccountLayout.decode(new Uint8Array(tokenAccountInfo.data));
   const balance = accountData.amount;
 
   return balance;
@@ -277,10 +277,10 @@ export const getTokenAccountBalance = async (tokenAccountPubkey: web3.PublicKey)
 
 export async function getTokenAccountDetails(tokenAccountPubkey: web3.PublicKey) {
   try {
-    // 获取代币账户信息
+    // Get token account info
     const tokenAccount = await getAccount(connection, tokenAccountPubkey);
 
-    // // 输出代币账户的详细信息
+    // // Output token account details
     // console.log('Token Account Info:', tokenAccount);
     // console.log(`Mint: ${tokenAccount.mint.toBase58()}`);
     // console.log(`Owner: ${tokenAccount.owner.toBase58()}`);
@@ -293,7 +293,7 @@ export async function getTokenAccountDetails(tokenAccountPubkey: web3.PublicKey)
 
     return tokenAccount;
   } catch (error) {
-    console.error('Failed to get token account details:', error);
+    // console.error('Failed to get token account details:', error);
   }
 }
 
@@ -308,7 +308,7 @@ export async function findFreezeAuthority(mintPublicKey) {
   }
 
   // Decode the account info
-  const mintData = MintLayout.decode(mintInfo.data);
+  const mintData = MintLayout.decode(new Uint8Array(mintInfo.data));
 
   // console.log('mintData:', mintData)
   return new PublicKey(mintData.freezeAuthority);

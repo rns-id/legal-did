@@ -7,7 +7,7 @@ import {
     setProvider,
     AnchorProvider,
     BN,
-} from '@project-serum/anchor'
+} from '@coral-xyz/anchor'
 import {
     createAssociatedTokenAccountInstruction,
 
@@ -56,7 +56,7 @@ describe("config settings", () => {
         // console.log('mintPrice:', mintPrice.toNumber())
         let tx = await program.methods
             .setMintPrice(mintPrice)
-            .accounts({
+            .accountsPartial({
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
@@ -77,7 +77,7 @@ describe("config settings", () => {
 
         await program.methods
             .setFeeRecipient(ADMIN_WALLET.publicKey)
-            .accounts({
+            .accountsPartial({
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
@@ -101,7 +101,7 @@ describe("config settings", () => {
 
         await program.methods
             .setBaseUri(_base_uri)
-            .accounts({
+            .accountsPartial({
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
@@ -124,7 +124,7 @@ describe("config settings", () => {
 
         await program.methods
             .setIsBlockedAddress(_wallet, true)
-            .accounts({
+            .accountsPartial({
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
@@ -147,7 +147,7 @@ describe("config settings", () => {
 
         await program.methods
             .setIsBlockedRnsId(rns_id, true)
-            .accounts({
+            .accountsPartial({
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })

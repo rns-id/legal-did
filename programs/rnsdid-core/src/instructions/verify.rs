@@ -5,15 +5,15 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::rent::Rent;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use mpl_bubblegum::state::metaplex_anchor::MplTokenMetadata;
+use mpl_token_metadata::types::{Collection, Creator, DataV2};
 
-use mpl_token_metadata::state::{Collection, Creator, DataV2};
+use crate::utils::MplTokenMetadata;
 
 use crate::error::ErrorCode;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(rns_id: String, wallet:Pubkey, merkle_root: String, index: String)]
+#[instruction(rns_id: String, wallet: Pubkey, merkle_root: String, index: String)]
 pub struct VerifyContext<'info> {
   #[account(mut)]
   pub authority: Signer<'info>,
@@ -21,14 +21,14 @@ pub struct VerifyContext<'info> {
   #[account(
     mut,
     constraint = non_transferable_project.authority == authority.key(),
-    seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_ref()],
+    seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
     bump = non_transferable_project.bump
   )]
   pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
 
   #[account(
     mut,
-    seeds = [NON_TRANSFERABLE_PROJECT_MINT_PREFIX.as_ref()],
+    seeds = [NON_TRANSFERABLE_PROJECT_MINT_PREFIX.as_bytes()],
     bump = non_transferable_project.mint_bump,
   )]
   pub non_transferable_project_mint: Box<Account<'info, Mint>>,
@@ -45,8 +45,8 @@ pub struct VerifyContext<'info> {
     init_if_needed,
     payer = authority,
     seeds = [
-      NON_TRANSFERABLE_NFT_MINT_PREFIX.as_ref(),
-      index.as_ref()
+      NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(),
+      index.as_bytes()
     ],
     bump,
     mint::decimals = 0,
@@ -77,7 +77,7 @@ pub struct VerifyContext<'info> {
       1 +         // is_authorized
       1,          // bump
       seeds = [
-          NON_TRANSFERABLE_NFT_USERSTATUS_PREFIX.as_ref(),
+          NON_TRANSFERABLE_NFT_USERSTATUS_PREFIX.as_bytes(),
           &hash_seed(&rns_id)[..32],
           wallet.key().as_ref()
       ],
@@ -92,7 +92,7 @@ pub struct VerifyContext<'info> {
     8 +
     32,
     seeds = [
-        NON_TRANSFERABLE_NFT_RNSID_PREFIX.as_ref(),
+        NON_TRANSFERABLE_NFT_RNSID_PREFIX.as_bytes(),
         &hash_seed(&rns_id)[..32],
     ],
     bump
@@ -102,11 +102,14 @@ pub struct VerifyContext<'info> {
   #[account(
     init_if_needed,
     payer = authority,
-    space =  8 +
-    400 +
-    32,
+    space = 8 +
+    72 +   // merkle_root (64 hex chars + 4 bytes length prefix)
+    72 +   // rns_id
+    32 +   // authority
+    32 +   // mint
+    1,     // bump
     seeds = [
-        NON_TRANSFERABLE_NFT_STATUS_PREFIX.as_ref(),
+        NON_TRANSFERABLE_NFT_STATUS_PREFIX.as_bytes(),
         non_transferable_nft_mint.key().as_ref()
     ],
     bump
@@ -125,6 +128,9 @@ pub struct VerifyContext<'info> {
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
+  /// CHECK: Sysvar Instructions
+  #[account(address = anchor_lang::solana_program::sysvar::instructions::ID)]
+  pub sysvar_instructions: AccountInfo<'info>,
 }
 
 impl<'info> VerifyContext<'info> {
@@ -153,6 +159,8 @@ impl<'info> VerifyContext<'info> {
       collection_master_edition: self
         .non_transferable_project_master_edition
         .to_account_info(),
+      system_program: self.system_program.to_account_info(),
+      sysvar_instructions: self.sysvar_instructions.to_account_info(),
     };
     CpiContext::new(
       self.token_metadata_program.to_account_info().clone(),
@@ -246,7 +254,8 @@ pub fn handler(
 
   let rns_id_status = &mut ctx.accounts.non_transferable_rns_id_status;
   rns_id_status.authority = ctx.accounts.authority.key();
-  rns_id_status.num = rns_id_status.num + 1;
+  // num only increases during airdrop, not during verify
 
   Ok(())
 }
+

@@ -58,3 +58,6 @@ yarn-error.log
 outputs
 
 tests/utils/keypairs
+
+docs/
+*.md 

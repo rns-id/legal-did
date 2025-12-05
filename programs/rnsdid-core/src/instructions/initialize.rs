@@ -7,8 +7,9 @@ use crate::utils::{
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::rent::Rent;
 use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount};
-use mpl_bubblegum::state::metaplex_anchor::MplTokenMetadata;
-use mpl_token_metadata::state::DataV2;
+use mpl_token_metadata::types::DataV2;
+
+use crate::utils::MplTokenMetadata;
 
 use crate::state::*;
 
@@ -30,7 +31,7 @@ pub struct Initialize<'info> {
       init,
       payer = authority,
       space = NON_TRANSFERABLE_PROJECT_SIZE,
-      seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_ref()],
+      seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
       bump
   )]
   pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
@@ -38,7 +39,7 @@ pub struct Initialize<'info> {
   #[account(
       init,
       payer = authority,
-      seeds = [NON_TRANSFERABLE_PROJECT_MINT_PREFIX.as_ref()],
+      seeds = [NON_TRANSFERABLE_PROJECT_MINT_PREFIX.as_bytes()],
       bump,
       mint::decimals = 0,
       mint::authority = non_transferable_project,
@@ -49,7 +50,7 @@ pub struct Initialize<'info> {
   #[account(
       init,
       payer = authority,
-      seeds = [NON_TRANSFERABLE_PROJECT_VAULT_PREFIX.as_ref()],
+      seeds = [NON_TRANSFERABLE_PROJECT_VAULT_PREFIX.as_bytes()],
       bump,
       token::mint = non_transferable_project_mint,
       token::authority = non_transferable_project,
@@ -120,8 +121,8 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
 
   non_transferable_project.mint_price = 100;
   non_transferable_project.authority = ctx.accounts.authority.to_account_info().key();
-  non_transferable_project.bump = *ctx.bumps.get("non_transferable_project").unwrap();
-  non_transferable_project.mint_bump = *ctx.bumps.get("non_transferable_project_mint").unwrap();
+  non_transferable_project.bump = ctx.bumps.non_transferable_project;
+  non_transferable_project.mint_bump = ctx.bumps.non_transferable_project_mint;
 
   non_transferable_project.name = args.name.clone();
   non_transferable_project.symbol = args.symbol.clone();

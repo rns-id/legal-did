@@ -145,7 +145,7 @@ pub struct SetMerkleRoot<'info> {
     #[account(
       mut,
       seeds = [
-        NON_TRANSFERABLE_NFT_STATUS_PREFIX.as_ref(),
+        NON_TRANSFERABLE_NFT_STATUS_PREFIX.as_bytes(),
         non_transferable_nft_mint.key().as_ref()
       ],
       bump

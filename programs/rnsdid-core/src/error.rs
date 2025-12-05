@@ -43,4 +43,8 @@ pub enum ErrorCode {
     // 12
     #[msg("RnsIs doesn't matched.")]
     RnsIsNotMatch,
+
+    // 13
+    #[msg("Only admin can perform this action.")]
+    Unauthorized,
 }

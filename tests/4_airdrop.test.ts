@@ -8,7 +8,7 @@ import {
     setProvider,
     AnchorProvider,
     BN,
-} from '@project-serum/anchor'
+} from '@coral-xyz/anchor'
 import { Metadata, Edition } from '@metaplex-foundation/mpl-token-metadata';
 
 import {
@@ -83,6 +83,7 @@ describe("airdrop", () => {
         nonTransferableNftStatus = await findNonTransferableNftStatus(nonTransferableNftMint);
         nonTransferableRnsIdStatus = await findNonTransferableRnsIdtatus(rnsId)
     })
+    
     it("successed: airdrop ", async () => {
 
         // console.log('admin:', ADMIN_WALLET.publicKey.toBase58())
@@ -122,21 +123,15 @@ describe("airdrop", () => {
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: web3.SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY,
+            sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
         };
 
         const merkleRoot = '2d852b3c21e923484a93d3a980a45b7571e89552d58875d40dd17c73216a49d7';
         const set_compute_unit_limit_ix = ComputeBudgetProgram.setComputeUnitLimit({
-            units: 1_000_000, // 请求的计算单元数量，可以根据需要调整
+            units: 1_000_000, // Requested compute units, adjust as needed
         });
-        const verify_ix = await program.instruction.verify(
-            rnsId,
-            mint_to_pubkey,
-            merkleRoot,
-            tokenIndex,
-            {
-                accounts
-            })
 
+        // Transaction 1: airdrop
         await program.methods.airdrop(
             rnsId,
             mint_to_pubkey,
@@ -145,7 +140,18 @@ describe("airdrop", () => {
         )
             .accounts(accounts)
             .preInstructions([set_compute_unit_limit_ix])
-            .postInstructions([verify_ix])
+            .signers([ADMIN_WALLET])
+            .rpc();
+
+        // Transaction 2: verify
+        await program.methods.verify(
+            rnsId,
+            mint_to_pubkey,
+            merkleRoot,
+            tokenIndex
+        )
+            .accounts(accounts)
+            .preInstructions([set_compute_unit_limit_ix])
             .signers([ADMIN_WALLET])
             .rpc();
 
@@ -181,8 +187,8 @@ describe("airdrop", () => {
         const merkleRoot_2 = '2d852b3c21e923484a93d3a980a45b7571e89552d58875d40dd17c73216a49d8';
         await program.methods
             .setMerkleRoot(rnsId, merkleRoot_2)
-            .accounts({
-                authority: ADMIN_WALLET.publicKey,
+            .accountsPartial({
+                authority: ADMIN_WALLET.publicKey,  // Explicitly specify authority
                 nonTransferableProject: nonTransferableProject,
                 nonTransferableNftMint: nonTransferableNftMint,
                 nonTransferableNftStatus: nonTransferableNftStatus,

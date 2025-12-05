@@ -106,7 +106,7 @@ pub mod rnsdid_core {
     authorize_mint::handler(ctx, rns_id, wallet)
   }
 
-  pub fn airdrop(ctx: Context<MintNonTransferableNft>, rns_id: String, wallet:Pubkey, merkle_root: String, index: String) -> Result<()> {
+  pub fn airdrop(ctx: Context<MintNonTransferableNft>, rns_id: String, wallet: Pubkey, merkle_root: String, index: String) -> Result<()> {
     airdrop::handler(ctx, rns_id, wallet, merkle_root, index)
   }
 

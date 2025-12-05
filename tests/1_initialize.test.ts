@@ -7,7 +7,7 @@ import {
     setProvider,
     AnchorProvider,
     BN,
-} from '@project-serum/anchor'
+} from '@coral-xyz/anchor'
 
 import { defaultPlugins } from "@metaplex-foundation/umi-bundle-defaults";
 import {
@@ -36,6 +36,16 @@ describe("initialize", () => {
     setProvider(provider)
     const program = workspace.RnsdidCore as Program<RnsdidCore>;
 
+    before(async () => {
+        // Airdrop SOL to test account
+        const airdropSignature = await provider.connection.requestAirdrop(
+            ADMIN_WALLET.publicKey,
+            10 * web3.LAMPORTS_PER_SOL
+        );
+        await provider.connection.confirmTransaction(airdropSignature);
+        console.log("Airdropped 10 SOL to ADMIN_WALLET");
+    });
+
     it("Is initialized!", async () => {
 
         const nonTransferableProject = await findNonTransferableProject();
@@ -44,14 +54,11 @@ describe("initialize", () => {
         const nonTransferableProjectMetadata = await getCollectionMetadataAddress(nonTransferableProjectMint);
         const nonTransferableProjectMasterEdition = await getCollectionMasterEditionAddress(nonTransferableProjectMint);
         const collectionVaultAccount = await getCollectionVaultAccount();
-
         const userTokenAccountAddress = await getUserAssociatedTokenAccount(USER_WALLET.publicKey, nonTransferableProjectMint);
 
-
         const transaction = new web3.Transaction()
-
         const ix_1 = ComputeBudgetProgram.setComputeUnitLimit({
-            units: 1_000_000, // 请求的计算单元数量，可以根据需要调整
+            units: 1_000_000, // Requested compute units, adjust as needed
         });
 
         const domain = "https://dev-api-1.rns.id/"
@@ -63,7 +70,7 @@ describe("initialize", () => {
                 uri: `${domain}api/v2/portal/identity/collection/metadata/`,
                 baseUri: `${domain}api/v2/portal/identity/nft/`
             })
-            .accounts({
+            .accountsPartial({
 
                 authority: ADMIN_WALLET.publicKey,
 
@@ -93,5 +100,6 @@ describe("initialize", () => {
             console.error('Metadata account not found');
             return;
         }
+        
     });
 });

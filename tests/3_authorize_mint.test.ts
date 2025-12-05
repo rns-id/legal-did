@@ -7,7 +7,7 @@ import {
     setProvider,
     AnchorProvider,
     BN,
-} from '@project-serum/anchor'
+} from '@coral-xyz/anchor'
 import {
     createAssociatedTokenAccountInstruction,
     // getCollectionId,

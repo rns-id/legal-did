@@ -1,9 +1,12 @@
+[toolchain]
+anchor_version = "0.31.1"
+
 [features]
 skip-lint = false
 [programs.mainnet]
 rnsdid_core = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
 [programs.devnet]
-rnsdid_core = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
+rnsdid_core = "BCkys1re7iw8NhM7nu6xLChGpgg9iCC8mZity2maL9en"
 [programs.testnet]
 rnsdid_core = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
 [programs.localnet]
@@ -20,22 +23,26 @@ wallet = "~/.config/solana/id.json"
 
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/1_initialize_collection.test.ts"
+# 运行所有测试（按顺序）
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/1_initialize.test.ts tests/2_collection_config.test.ts tests/3_authorize_mint.test.ts tests/4_airdrop.test.ts tests/6_burn.test.ts tests/12_simple_num_test.test.ts"
+
+# 运行单个测试 - 取消注释你想运行的
+# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/1_initialize.test.ts"
 # test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/2_collection_config.test.ts"
 # test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/3_authorize_mint.test.ts"
 # test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/4_airdrop.test.ts"
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/5_burn.test.ts"
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/6._fetch_metadata_edtion.test.ts"
+# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/5._fetch_data_info.test.ts"
+# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/6_burn.test.ts"
 
 
 [test]
-startup_wait = 50000
+startup_wait = 120000
 
 [test.validator]
+url = "https://solana-devnet.g.alchemy.com/v2/d7CkzFLMTtJttwjFJHPYe"
 # url = "https://api.devnet.solana.com"
 # url = "https://api.testnet.solana.com"
-url = "https://api.mainnet-beta.solana.com"
+# url = "https://api.mainnet-beta.solana.com"
 
 [[test.validator.clone]]
 address = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" # associated-token

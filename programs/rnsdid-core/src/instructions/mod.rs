@@ -1,17 +1,13 @@
+#![allow(ambiguous_glob_reexports)]
 
-pub mod initialize;
 pub mod airdrop;
+pub mod authorize_mint;
+pub mod burn;
+pub mod initialize;
 pub mod verify;
 
-pub mod burn;
-pub mod authorize_mint;
-
-pub use initialize::*;
 pub use airdrop::*;
-pub use verify::*;
-
-pub use burn::*;
 pub use authorize_mint::*;
-
-
-
+pub use burn::*;
+pub use initialize::*;
+pub use verify::*;

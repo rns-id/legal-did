@@ -1,4 +1,4 @@
-import { web3, workspace, Program, AnchorProvider, setProvider } from '@project-serum/anchor'
+import { web3, workspace, Program, AnchorProvider, setProvider } from '@coral-xyz/anchor'
 import { PublicKey } from '@solana/web3.js'
 import { RnsdidCore } from '../../target/types/rnsdid_core'
 import fs from 'fs'
