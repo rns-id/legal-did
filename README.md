@@ -1,60 +1,141 @@
-# LEGAL DID contract program On Solana
+# Legal DID - Solana Smart Contract
 
-This project is a contract program built on Solana Chain. It follows a structured approach to keep the code clean, maintainable, and scalable.
+A decentralized identity (DID) NFT contract built on Solana Token-2022, supporting non-transferable Soulbound Tokens.
+
+## Features
+
+- **Token-2022 Standard**: Uses SPL Token Extensions
+- **NonTransferable**: Soulbound NFT that cannot be transferred
+- **PermanentDelegate**: Permanent delegation for admin revoke/burn operations
+- **MetadataPointer**: On-chain metadata pointer to external JSON
+
+## Deployment
+
+| Network | Program ID |
+|---------|------------|
+| Devnet | `BCkys1re7iw8NhM7nu6xLChGpgg9iCC8mZity2maL9en` |
 
 ## Project Structure
 
 ```plaintext
 .
-├── lib             - Contract start file
-├── instructions    - Core logic instruction
-├── error           - common error functions
-├── state           - common state functions
-├── utils           - Helper functions
-├── Anchor.toml     - Anchor config file
+├── programs/rnsdid-core/
+│   ├── src/
+│   │   ├── lib.rs              # Contract entry point
+│   │   ├── instructions/       # Instruction implementations
+│   │   │   ├── initialize.rs   # Initialize project
+│   │   │   ├── authorize_mint.rs # Authorize minting
+│   │   │   ├── airdrop.rs      # Airdrop/mint NFT
+│   │   │   ├── burn.rs         # Burn NFT
+│   │   │   └── revoke.rs       # Revoke NFT
+│   │   ├── state/              # Account state definitions
+│   │   └── error.rs            # Error definitions
+├── scripts/                    # Deployment and test scripts
+├── tests/                      # Integration tests
+└── target/idl/                 # Generated IDL
 ```
 
-## Environment variables
+## Requirements
 
-## Getting Started
+- Rust 1.82.0+
+- Solana CLI 2.3.8+
+- Anchor 0.30.1+
+- Node.js 18+
 
-### Prerequisites
-
-- Rust 1.78.0 or higher
-- Solana 1.14.24 or or higher
-- Anchor 0.29.0 or or higher
+## Quick Start
 
 ### Installation
 
-1. Clone the repository:
-    ```sh
-    git clone git@github.com:rns-id/legal-did-solana.git
-    cd legal-did-solana
-    ```
+```sh
+git clone git@github.com:rns-id/legal-did-solana.git
+cd legal-did-solana
+yarn install
+anchor build
+```
 
-2. Install dependencies:
-    ```sh
-    anchor build
-    ```
+### Testing
 
-3. Run the units testing:
-    - anchor test.
+```sh
+anchor test
+```
 
-### Testing the program
+### Deploy to Devnet
 
-### Usage
+```sh
+./deploy-devnet.sh
+```
 
-## Contributing
+## Usage
 
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature`).
-3. Make your changes.
-4. Commit your changes (`git commit -am 'Add new feature'`).
-5. Push to the branch (`git push origin feature/your-feature`).
-6. Create a new Pull Request.
+### 1. Initialize Project
+
+```typescript
+await program.methods
+  .initialize({
+    name: 'Legal DID',
+    symbol: 'LDID',
+    baseUri: 'https://api.rns.id/api/v2/portal/identity/nft/',
+  })
+  .accounts({...})
+  .rpc()
+```
+
+### 2. Authorize Mint
+
+```typescript
+await program.methods
+  .authorizeMint(rnsId, targetWallet)
+  .accounts({...})
+  .rpc()
+```
+
+### 3. Airdrop NFT
+
+```typescript
+await program.methods
+  .airdrop(rnsId, targetWallet, merkleRoot, tokenIndex)
+  .accounts({...})
+  .rpc()
+```
+
+### 4. Revoke / Burn
+
+```typescript
+// Revoke (keep NFT, mark as invalid)
+await program.methods.revoke(rnsId).accounts({...}).rpc()
+
+// Burn (completely remove NFT)
+await program.methods.burn(rnsId).accounts({...}).rpc()
+```
+
+## Cost Estimation (SOL = $140)
+
+| Operation | SOL | USD |
+|-----------|-----|-----|
+| authorize_mint | 0.00163 | $0.23 |
+| airdrop | 0.00628 | $0.88 |
+| **Total per mint** | **0.00791** | **$1.11** |
+
+## On-chain Data
+
+### DID Status PDA (106 bytes)
+- rns_id hash
+- wallet address
+- merkle_root
+- status flags
+
+### NFT Mint (471 bytes)
+- Token-2022 extensions
+- Metadata pointer
+
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `scripts/init-devnet.ts` | Initialize Devnet project |
+| `scripts/mint-to-wallet.ts` | Mint NFT to specified wallet |
+| `scripts/mint-with-real-metadata.ts` | Mint with real metadata |
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgements
+MIT License
