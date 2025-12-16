@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::rent::Rent;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount};
-use crate::utils::MplTokenMetadata;
+// 移除 MplTokenMetadata 导入，不再需要
 
 use crate::error::ErrorCode;
 use crate::state::*;
@@ -35,13 +35,7 @@ pub struct MintNonTransferableNft<'info> {
   )]
   pub non_transferable_project_mint: Box<Account<'info, Mint>>,
 
-  /// CHECK: Used in CPI So no Harm
-  #[account(mut)]
-  pub non_transferable_project_metadata: AccountInfo<'info>,
-
-  /// CHECK: Used in CPI So no Harm
-  #[account(mut)]
-  pub non_transferable_project_master_edition: AccountInfo<'info>,
+  // 移除 project metadata 和 master edition 账户
 
   #[account(
     init_if_needed,
@@ -120,14 +114,7 @@ pub struct MintNonTransferableNft<'info> {
   )]
   pub non_transferable_nft_status: Box<Account<'info, NftStatusAccount>>,
 
-  /// CHECK: Used in CPI
-  #[account(mut)]
-  pub non_transferable_nft_metadata: UncheckedAccount<'info>,
-  /// CHECK: Used in CPI
-  #[account(mut)]
-  pub non_transferable_nft_master_edition: UncheckedAccount<'info>,
-
-  pub token_metadata_program: Program<'info, MplTokenMetadata>,
+  // 移除 NFT metadata、master edition 和 token metadata program
   pub associated_token_program: Program<'info, AssociatedToken>,
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
@@ -186,6 +173,21 @@ pub fn handler(ctx: Context<MintNonTransferableNft>, rns_id: String, wallet: Pub
   token::freeze_account(cpi_ctx.with_signer(&[&project_signer_seeds[..]]))?;
 
   msg!("freeze_account done");
+
+  // 设置用户状态
+  let user_status = &mut ctx.accounts.non_transferable_user_status;
+  require!(!user_status.is_minted, ErrorCode::LdidBlacklisted); // 使用合适的错误码
+  
+  user_status.is_minted = true;
+  user_status.authority = ctx.accounts.user_account.key();
+  user_status.rns_id = rns_id.clone();
+
+  // 设置 NFT 状态
+  let nft_status = &mut ctx.accounts.non_transferable_nft_status;
+  nft_status.authority = ctx.accounts.user_account.key();
+  nft_status.merkle_root = _merkle_root.clone();
+  nft_status.rns_id = rns_id.clone();
+  nft_status.mint = ctx.accounts.non_transferable_nft_mint.key();
 
   // Increase RNS ID NFT count
   ctx.accounts.non_transferable_rns_id_status.num = ctx.accounts.non_transferable_rns_id_status.num

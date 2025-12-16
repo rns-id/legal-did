@@ -110,12 +110,18 @@ pub mod rnsdid_core {
     airdrop::handler(ctx, rns_id, wallet, merkle_root, index)
   }
 
-  pub fn verify(ctx: Context<VerifyContext>, rns_id: String, wallet: Pubkey, merkle_root: String, index: String) -> Result<()> {
-    verify::handler(ctx, rns_id, wallet, merkle_root, index)
-  }
+
 
   pub fn burn(ctx: Context<BurnNonTransferableNft>, rns_id: String, wallet: Pubkey) -> Result<()> {
     burn::handler(ctx, rns_id, wallet)
+  }
+
+  pub fn revoke(ctx: Context<RevokeNonTransferableNft>, rns_id: String, wallet: Pubkey) -> Result<()> {
+    revoke::handler(ctx, rns_id, wallet)
+  }
+
+  pub fn cleanup(ctx: Context<CleanupRevokedNft>, rns_id: String, wallet: Pubkey) -> Result<()> {
+    cleanup::handler(ctx, rns_id, wallet)
   }
 
 }

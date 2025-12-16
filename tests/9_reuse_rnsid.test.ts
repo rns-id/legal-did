@@ -111,27 +111,8 @@ describe("Reuse RNS ID for different wallets", () => {
     let rnsIdStatus = await program.account.rnsIdStatusAccount.fetch(nonTransferableRnsIdStatus);
     console.log("📊 RnsIdStatus.num =", rnsIdStatus.num.toString());
 
-    // 3. Verify
-    await program.methods
-      .verify(rnsId, userPubkey1, "", tokenIndex1)
-      .accountsPartial({
-        authority: ADMIN_WALLET.publicKey,
-        nonTransferableProject: collectionAddress,
-        nonTransferableProjectMint: collectionMintAddress,
-        nonTransferableProjectMetadata: collectionMetadataAddress,
-        nonTransferableNftMint: nonTransferableNftMint1,
-        userTokenAccount: userTokenAccount1,
-        nonTransferableUserStatus: nonTransferableUserStatus1,
-        nonTransferableNftStatus: nonTransferableNftStatus1,
-        nonTransferableNftMetadata: nonTransferableNftMetadata1,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: web3.SystemProgram.programId,
-        sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
-      })
-      .signers([ADMIN_WALLET])
-      .rpc();
-    console.log("✅ Verified NFT for USER_WALLET");
+    // Verify步骤已合并到airdrop中，不再需要单独调用
+    console.log("✅ Airdrop completed for USER_WALLET (includes verification)");
 
     // ========================================
     // Part 2: Burn USER_WALLET NFT
@@ -227,27 +208,8 @@ describe("Reuse RNS ID for different wallets", () => {
     rnsIdStatus = await program.account.rnsIdStatusAccount.fetch(nonTransferableRnsIdStatus);
     console.log("📊 RnsIdStatus.num =", rnsIdStatus.num.toString(), "(recreated)");
 
-    // 3. Verify for USER_WALLET_2
-    await program.methods
-      .verify(rnsId, userPubkey2, "", tokenIndex2)
-      .accountsPartial({
-        authority: ADMIN_WALLET.publicKey,
-        nonTransferableProject: collectionAddress,
-        nonTransferableProjectMint: collectionMintAddress,
-        nonTransferableProjectMetadata: collectionMetadataAddress,
-        nonTransferableNftMint: nonTransferableNftMint2,
-        userTokenAccount: userTokenAccount2,
-        nonTransferableUserStatus: nonTransferableUserStatus2,
-        nonTransferableNftStatus: nonTransferableNftStatus2,
-        nonTransferableNftMetadata: nonTransferableNftMetadata2,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: web3.SystemProgram.programId,
-        sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
-      })
-      .signers([ADMIN_WALLET])
-      .rpc();
-    console.log("✅ Verified NFT for USER_WALLET_2");
+    // Verify步骤已合并到airdrop中，不再需要单独调用
+    console.log("✅ Airdrop completed for USER_WALLET_2 (includes verification)");
 
     // Verify both wallets have NFT
     const details2 = await getTokenAccountDetails(userTokenAccount2);

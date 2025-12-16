@@ -3,11 +3,13 @@
 pub mod airdrop;
 pub mod authorize_mint;
 pub mod burn;
+pub mod cleanup;
 pub mod initialize;
-pub mod verify;
+pub mod revoke;
 
 pub use airdrop::*;
 pub use authorize_mint::*;
 pub use burn::*;
+pub use cleanup::*;
 pub use initialize::*;
-pub use verify::*;
+pub use revoke::*;

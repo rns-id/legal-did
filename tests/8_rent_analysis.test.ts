@@ -128,31 +128,11 @@ describe("Rent Analysis - Complete Lifecycle", () => {
                       (rnsIdStatusAccount?.lamports || 0);
     console.log("Total Rent:", (totalRent / 1e9).toFixed(8), "SOL");
 
-    // 3. Verify
-    await program.methods
-      .verify(rnsId, userPubkey, "", tokenIndex)
-      .accountsPartial({
-        authority: ADMIN_WALLET.publicKey,
-        nonTransferableProject: collectionAddress,
-        nonTransferableProjectMint: collectionMintAddress,
-        nonTransferableProjectMetadata: collectionMetadataAddress,
-        nonTransferableNftMint: nonTransferableNftMint,
-        userTokenAccount: userTokenAccount,
-        nonTransferableUserStatus: nonTransferableUserStatus,
-        nonTransferableNftStatus: nonTransferableNftStatus,
-        nonTransferableNftMetadata: nonTransferableNftMetadata,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: web3.SystemProgram.programId,
-        sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
-      })
-      .signers([ADMIN_WALLET])
-      .rpc();
-
-    const adminBalanceAfterVerify = await provider.connection.getBalance(ADMIN_WALLET.publicKey);
-    console.log("\n=== After Verify ===");
+    // Verify步骤已合并到airdrop中，不再需要单独调用
+    const adminBalanceAfterVerify = adminBalanceAfterAirdrop; // 现在verify包含在airdrop中
+    console.log("\n=== After Airdrop (includes verification) ===");
     console.log("Admin:", adminBalanceAfterVerify / 1e9, "SOL");
-    console.log("Cost:", (adminBalanceAfterAirdrop - adminBalanceAfterVerify) / 1e9, "SOL");
+    console.log("Verify cost: 0 SOL (included in airdrop)");
 
     // 4. Burn
     const nonTransferableNftMasterEdition = await getCollectionMetadataAddress(nonTransferableNftMint);

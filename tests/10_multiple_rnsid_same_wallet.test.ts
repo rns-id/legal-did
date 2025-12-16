@@ -85,19 +85,8 @@ describe("Multiple RNS IDs for same wallet", () => {
         .rpc();
       console.log(`✅ Airdropped "${rnsId}"`);
 
-      // 3. Verify
-      await program.methods
-        .verify(rnsId, userPubkey, "", tokenIndex)
-        .accountsPartial({
-          nonTransferableNftMint: nonTransferableNftMint,
-          userTokenAccount: userTokenAccount,
-          nonTransferableUserStatus: nonTransferableUserStatus,
-          nonTransferableNftStatus: nonTransferableNftStatus,
-          nonTransferableNftMetadata: nonTransferableNftMetadata,
-        })
-        .signers([ADMIN_WALLET])
-        .rpc();
-      console.log(`✅ Verified "${rnsId}"`);
+      // Verify步骤已合并到airdrop中，不再需要单独调用
+      console.log(`✅ Airdrop completed for "${rnsId}" (includes verification)`);
 
       // Verify token
       const details = await getTokenAccountDetails(userTokenAccount);

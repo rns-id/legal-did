@@ -78,7 +78,7 @@ pub struct UserStatusAccount {
   pub rns_id: String,
 
   pub is_minted: bool,
-  pub is_authorized: bool,
+  pub is_authorized: bool,  // 复用此字段：false = 已撤销
   pub bump: u8,
 }
 

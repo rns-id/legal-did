@@ -111,31 +111,8 @@ describe("RNS ID Status Cleanup Test", () => {
     const rnsIdRentBefore = rnsIdAccountInfo?.lamports || 0;
     console.log("💰 RnsIdStatus rent:", rnsIdRentBefore / 1e9, "SOL");
 
-    // 3. Verify
-    await program.methods
-      .verify(rnsId, userPubkey, "", tokenIndex)
-      .accountsPartial({
-        authority: ADMIN_WALLET.publicKey,
-        nonTransferableProject: collectionAddress,
-        nonTransferableProjectMint: collectionMintAddress,
-        nonTransferableProjectMetadata: collectionMetadataAddress,
-        nonTransferableProjectMasterEdition: collectionMasterEdition,
-        nonTransferableNftMint: nonTransferableNftMint,
-        userAccount: userPubkey,
-        userTokenAccount: userTokenAccount,
-        nonTransferableUserStatus: nonTransferableUserStatus,
-        nonTransferableRnsIdStatus: nonTransferableRnsIdStatus,
-        nonTransferableNftStatus: nonTransferableNftStatus,
-        nonTransferableNftMetadata: nonTransferableNftMetadata,
-        nonTransferableNftMasterEdition: nonTransferableNftMasterEdition,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: web3.SystemProgram.programId,
-        sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
-      })
-      .signers([ADMIN_WALLET])
-      .rpc();
-    console.log("✅ Verified");
+    // Verify步骤已合并到airdrop中，不再需要单独调用
+    console.log("✅ Airdrop completed (includes verification)");
 
     // 4. Burn
     

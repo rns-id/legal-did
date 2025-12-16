@@ -9,7 +9,7 @@ import {
     AnchorProvider,
     BN,
 } from '@coral-xyz/anchor'
-import { Metadata, Edition } from '@metaplex-foundation/mpl-token-metadata';
+// import { Metadata, Edition } from '@metaplex-foundation/mpl-token-metadata';
 
 import {
 
@@ -110,16 +110,19 @@ describe("airdrop", () => {
             nonTransferableRnsIdStatus: nonTransferableRnsIdStatus,
 
             nonTransferableNftMint: nonTransferableNftMint,
-            nonTransferableNftMetadata: nonTransferableNftMetadata,
-            nonTransferableNftMasterEdition: nonTransferableNftMasterEdition,
+            // 移除 metadata 相关账户
+            // nonTransferableNftMetadata: nonTransferableNftMetadata,
+            // nonTransferableNftMasterEdition: nonTransferableNftMasterEdition,
 
             nonTransferableProject: nonTransferableProject,
             nonTransferableProjectMint: nonTransferableProjectMint,
-            nonTransferableProjectMetadata: nonTransferableProjectMetadata,
-            nonTransferableProjectMasterEdition: nonTransferableProjectMasterEdition,
+            // 移除 project metadata 相关账户
+            // nonTransferableProjectMetadata: nonTransferableProjectMetadata,
+            // nonTransferableProjectMasterEdition: nonTransferableProjectMasterEdition,
 
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+            // 移除 token metadata program
+            // tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: web3.SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY,
@@ -131,20 +134,8 @@ describe("airdrop", () => {
             units: 1_000_000, // Requested compute units, adjust as needed
         });
 
-        // Transaction 1: airdrop
+        // 只需要一个 airdrop 交易，包含所有逻辑
         await program.methods.airdrop(
-            rnsId,
-            mint_to_pubkey,
-            merkleRoot,
-            tokenIndex
-        )
-            .accounts(accounts)
-            .preInstructions([set_compute_unit_limit_ix])
-            .signers([ADMIN_WALLET])
-            .rpc();
-
-        // Transaction 2: verify
-        await program.methods.verify(
             rnsId,
             mint_to_pubkey,
             merkleRoot,

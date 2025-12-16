@@ -137,43 +137,9 @@ describe("Simple Num Counter Test", () => {
     const afterAirdrop = await program.account.rnsIdStatusAccount.fetch(nonTransferableRnsIdStatus);
     console.log("📊 Num after airdrop =", afterAirdrop.num.toString());
 
-    // 3. Verify
-    console.log("\n--- Step 3: Verify ---");
-    const adminBalanceBeforeVerify = await provider.connection.getBalance(ADMIN_WALLET.publicKey);
-    const userBalanceBeforeVerify = await provider.connection.getBalance(userPubkey);
-
-    await program.methods
-      .verify(rnsId, userPubkey, "", tokenIndex)
-      .accountsPartial({
-        authority: ADMIN_WALLET.publicKey,
-        nonTransferableProject: collectionAddress,
-        nonTransferableProjectMint: collectionMintAddress,
-        nonTransferableProjectMetadata: collectionMetadataAddress,
-        nonTransferableProjectMasterEdition: collectionMasterEdition,
-        nonTransferableNftMint: nonTransferableNftMint,
-        userAccount: userPubkey,
-        userTokenAccount: userTokenAccount,
-        nonTransferableUserStatus: nonTransferableUserStatus,
-        nonTransferableRnsIdStatus: nonTransferableRnsIdStatus,
-        nonTransferableNftStatus: nonTransferableNftStatus,
-        nonTransferableNftMetadata: nonTransferableNftMetadata,
-        nonTransferableNftMasterEdition: nonTransferableNftMasterEdition,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: web3.SystemProgram.programId,
-        sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
-      })
-      .signers([ADMIN_WALLET])
-      .rpc();
-    
-    const adminBalanceAfterVerify = await provider.connection.getBalance(ADMIN_WALLET.publicKey);
-    const userBalanceAfterVerify = await provider.connection.getBalance(userPubkey);
-    const verifyAdminCost = (adminBalanceBeforeVerify - adminBalanceAfterVerify) / 1e9;
-    const verifyUserCost = (userBalanceBeforeVerify - userBalanceAfterVerify) / 1e9;
-    
-    console.log("✅ Verified");
-    console.log("  💸 Admin Cost:", verifyAdminCost.toFixed(8), "SOL");
-    console.log("  💸 User Cost:", verifyUserCost.toFixed(8), "SOL");
+    // Verify步骤已合并到airdrop中，不再需要单独调用
+    console.log("\n--- Step 3: Verification (included in airdrop) ---");
+    console.log("✅ Airdrop completed (includes verification)");
 
     // 4. Burn
     console.log("\n--- Step 4: Burn ---");

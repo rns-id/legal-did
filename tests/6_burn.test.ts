@@ -65,18 +65,12 @@ describe("burn", () => {
 
     const collectionAddress = await findNonTransferableProject();
 
-    const collectionMintAddress = await getCollectionMintAddress();
-    const collectionMetadataAddress = await getCollectionMetadataAddress(collectionMintAddress);
-
     const nonTransferableNftMint = await getNonTransferableNftMintAddress(rnsId, tokenIndex);
     const userTokenAccount = await getUserAssociatedTokenAccount(userPubkey, nonTransferableNftMint)
 
     const details_before = await getTokenAccountDetails(userTokenAccount)
     assert(details_before.amount == BigInt(1), '==');
 
-
-    const nonTransferableNftMetadata = await getCollectionMetadataAddress(nonTransferableNftMint)
-    const nonTransferableNftMasterEdition = await getCollectionMasterEditionAddress(nonTransferableNftMint)
     const nonTransferableNftStatus = await findNonTransferableNftStatus(nonTransferableNftMint);
     const nonTransferableUserStatus = findNonTransferableUserStatus(rnsId, userPubkey);
     const nonTransferableRnsIdStatus = await findNonTransferableRnsIdtatus(rnsId)
@@ -95,24 +89,17 @@ describe("burn", () => {
         nftOwner: userPubkey,
 
         userTokenAccount: userTokenAccount,
-
         nonTransferableNftMint: nonTransferableNftMint,
-        nonTransferableNftMetadata: nonTransferableNftMetadata,
-        nonTransferableNftMasterEdition: nonTransferableNftMasterEdition,
 
         nonTransferableUserStatus: nonTransferableUserStatus,
         nonTransferableNftStatus: nonTransferableNftStatus,
         nonTransferableRnsIdStatus: nonTransferableRnsIdStatus,
 
         nonTransferableProject: collectionAddress,
-        nonTransferableProjectMint: collectionMintAddress,
-        nonTransferableProjectMetadata: collectionMetadataAddress,
 
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: web3.SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY,
-        sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
       })
       .signers([USER_WALLET])  // Only user signature required
       .rpc();
