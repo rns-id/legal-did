@@ -1,7 +1,7 @@
 [package]
 name = "rnsdid-core"
-version = "0.1.0"
-description = "Created with Anchor"
+version = "0.2.0"
+description = "RNSID DID on Solana with Token-2022"
 edition = "2021"
 
 [lib]
@@ -22,5 +22,8 @@ custom-panic = []
 [dependencies]
 anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
 anchor-spl = "0.31.1"
-mpl-token-metadata = "5.1"
+spl-token-2022 = { version = "6", features = ["no-entrypoint"] }
+spl-token-metadata-interface = "0.6"
+spl-pod = "0.4"
+spl-associated-token-account = { version = "6", features = ["no-entrypoint"] }
 sha2 = "0.10"

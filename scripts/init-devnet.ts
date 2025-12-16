@@ -1,5 +1,5 @@
 import { Program, AnchorProvider, Wallet, web3 } from '@coral-xyz/anchor';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import * as fs from 'fs';
 
 const { 
@@ -13,7 +13,6 @@ const {
 
 // 配置
 const PROGRAM_ID = new PublicKey('BCkys1re7iw8NhM7nu6xLChGpgg9iCC8mZity2maL9en');
-const TOKEN_METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 const RPC_URL = 'https://api.devnet.solana.com';
 
 // PDA 计算函数
@@ -25,7 +24,7 @@ function findNonTransferableProject(): web3.PublicKey {
     return pda;
 }
 
-function getCollectionMintAddress(): web3.PublicKey {
+function getProjectMintAddress(): web3.PublicKey {
     const [pda] = PublicKey.findProgramAddressSync(
         [Buffer.from("nt-project-mint")],
         PROGRAM_ID
@@ -33,33 +32,9 @@ function getCollectionMintAddress(): web3.PublicKey {
     return pda;
 }
 
-function getCollectionVaultAddress(): web3.PublicKey {
-    const [pda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("nt-project-mint-vault")],
-        PROGRAM_ID
-    );
-    return pda;
-}
-
-function getCollectionMetadataAddress(mint: web3.PublicKey): web3.PublicKey {
-    const [pda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('metadata'), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-        TOKEN_METADATA_PROGRAM_ID
-    );
-    return pda;
-}
-
-function getCollectionMasterEditionAddress(mint: web3.PublicKey): web3.PublicKey {
-    const [pda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('metadata'), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer(), Buffer.from('edition')],
-        TOKEN_METADATA_PROGRAM_ID
-    );
-    return pda;
-}
-
 async function main() {
     console.log('========================================');
-    console.log('RNS DID Devnet 初始化脚本');
+    console.log('RNS DID Devnet 初始化脚本 (Token-2022)');
     console.log('========================================\n');
 
     // 加载钱包
@@ -81,27 +56,33 @@ async function main() {
 
     // 计算所有 PDA
     const nonTransferableProject = findNonTransferableProject();
-    const nonTransferableProjectMint = getCollectionMintAddress();
-    const nonTransferableProjectVault = getCollectionVaultAddress();
-    const nonTransferableProjectMetadata = getCollectionMetadataAddress(nonTransferableProjectMint);
-    const nonTransferableProjectMasterEdition = getCollectionMasterEditionAddress(nonTransferableProjectMint);
+    const nonTransferableProjectMint = getProjectMintAddress();
 
     console.log('\nPDA 地址:');
     console.log('  Project:', nonTransferableProject.toBase58());
-    console.log('  Project Mint:', nonTransferableProjectMint.toBase58());
-    console.log('  Project Vault:', nonTransferableProjectVault.toBase58());
-    console.log('  Project Metadata:', nonTransferableProjectMetadata.toBase58());
-    console.log('  Project Master Edition:', nonTransferableProjectMasterEdition.toBase58());
+    console.log('  Project Mint (Token-2022):', nonTransferableProjectMint.toBase58());
     console.log('');
 
     // 检查项目是否已初始化
     const projectInfo = await connection.getAccountInfo(nonTransferableProject);
     if (projectInfo) {
         console.log('✅ 项目已经初始化过了！');
+        
+        // 显示项目信息
+        try {
+            const projectData = await (program.account as any).projectAccount.fetch(nonTransferableProject);
+            console.log('\n项目信息:');
+            console.log('  Name:', projectData.name);
+            console.log('  Symbol:', projectData.symbol);
+            console.log('  Base URI:', projectData.baseUri);
+            console.log('  Authority:', projectData.authority.toBase58());
+        } catch (e) {
+            console.log('无法读取项目数据');
+        }
         return;
     }
 
-    console.log('正在初始化项目...');
+    console.log('正在初始化项目 (Token-2022)...');
     
     try {
         const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
@@ -114,18 +95,13 @@ async function main() {
             .initialize({
                 name: "Legal DID",
                 symbol: 'LDID',
-                uri: `${domain}api/v2/portal/identity/collection/metadata/`,
                 baseUri: `${domain}api/v2/portal/identity/nft/`
             })
             .accounts({
                 authority: adminWallet.publicKey,
                 nonTransferableProject: nonTransferableProject,
                 nonTransferableProjectMint: nonTransferableProjectMint,
-                nonTransferableProjectVault: nonTransferableProjectVault,
-                nonTransferableProjectMetadata: nonTransferableProjectMetadata,
-                nonTransferableProjectMasterEdition: nonTransferableProjectMasterEdition,
-                tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-                tokenProgram: TOKEN_PROGRAM_ID,
+                tokenProgram: TOKEN_2022_PROGRAM_ID,
                 systemProgram: SystemProgram.programId,
                 rent: SYSVAR_RENT_PUBKEY,
             })

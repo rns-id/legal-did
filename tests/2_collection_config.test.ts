@@ -9,71 +9,41 @@ import {
     BN,
 } from '@coral-xyz/anchor'
 import {
-    createAssociatedTokenAccountInstruction,
-
-    getCollectionMetadataAddress,
-    getUserAssociatedTokenAccount,
-
-    getOwnershipAccountBump,
-    getOwnershipAccountAddress,
     findNonTransferableProject,
-    // getCollectionAccount
 } from './utils/utils'
 import { assert } from 'chai';
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Keypair } from '@solana/web3.js';
 import {
     ADMIN_WALLET,
-    USER_WALLET,
- } from './utils/constants';
+} from './utils/constants';
 
 
 describe("config settings", () => {
 
     const provider = AnchorProvider.env();
-
     setProvider(provider);
-
     const program = workspace.RnsdidCore as Program<RnsdidCore>;
 
-    // it("sucessed:airdrop some gas!", async () => {
-    //     const amount = 5;
-    //      // Request airdrop LAMPORTS
-    //     const airdropSignature = await provider.connection.requestAirdrop(
-    //         new PublicKey(USER_WALLET.publicKey),
-    //         LAMPORTS_PER_SOL * amount // Amount in SOL
-    //     );
-    //     // Confirm the transaction
-    //     await provider.connection.confirmTransaction(airdropSignature);
-    //     // console.log(`Airdropped ${amount} SOL to ${USER_WALLET.publicKey}`);
-    // });
-
-    it("sucessed:set_mint_price", async () => {
-
+    it("success: set_mint_price", async () => {
         const nonTransferableProject = await findNonTransferableProject();
-
         const mintPrice = new BN(100);
 
-        // console.log('mintPrice:', mintPrice.toNumber())
-        let tx = await program.methods
+        await program.methods
             .setMintPrice(mintPrice)
             .accountsPartial({
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
-            .signers([
-                ADMIN_WALLET
-            ])
+            .signers([ADMIN_WALLET])
             .rpc();
 
-        const _collection = await program.account.projectAccount.fetch(nonTransferableProject)
+        const _collection = await program.account.projectAccount.fetch(nonTransferableProject);
         assert(mintPrice.toString() == _collection.mintPrice.toString(), 'mintPrice not eq!');
+        console.log("✅ set_mint_price:", mintPrice.toString());
     });
 
-    it("sucessed:set_fee_recipient!", async () => {
-
+    it("success: set_fee_recipient", async () => {
         const nonTransferableProject = await findNonTransferableProject();
-
-        const mintPrice = new BN(100);
 
         await program.methods
             .setFeeRecipient(ADMIN_WALLET.publicKey)
@@ -81,23 +51,17 @@ describe("config settings", () => {
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
-            .signers([
-                ADMIN_WALLET
-            ])
+            .signers([ADMIN_WALLET])
             .rpc();
 
-        const _collection = await program.account.projectAccount.fetch(nonTransferableProject)
-
-        assert(ADMIN_WALLET.publicKey.toBase58().toString() == _collection.feeRecipient.toBase58().toString(), 'mintPrice not eq!');
+        const _collection = await program.account.projectAccount.fetch(nonTransferableProject);
+        assert(ADMIN_WALLET.publicKey.toBase58() == _collection.feeRecipient.toBase58(), 'feeRecipient not eq!');
+        console.log("✅ set_fee_recipient:", ADMIN_WALLET.publicKey.toBase58());
     });
 
-    it("sucessed:set_base_uri", async () => {
-
+    it("success: set_base_uri", async () => {
         const nonTransferableProject = await findNonTransferableProject();
-
-        // https://dev-api-1.rns.id/api/v2/portal/identity/nft/8b3c57e5-12f7-4fa0-8e34-4a89cf31bf3b.json
-        const _base_uri = "https://dev-api-1.rns.id/api/v2/portal/identity/nft/";
-        //mainnet: "https://api.rns.id/api/v2/portal/identity/nft/";
+        const _base_uri = "https://api.rns.id/api/v2/portal/identity/nft/";
 
         await program.methods
             .setBaseUri(_base_uri)
@@ -105,21 +69,16 @@ describe("config settings", () => {
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
-            .signers([
-                ADMIN_WALLET
-            ])
+            .signers([ADMIN_WALLET])
             .rpc();
 
-        const data = await program.account.projectAccount.fetch(nonTransferableProject)
-
-        assert(data.baseUri.toString() == _base_uri, "base uri setting failed!")
-
+        const data = await program.account.projectAccount.fetch(nonTransferableProject);
+        assert(data.baseUri.toString() == _base_uri, "base uri setting failed!");
+        console.log("✅ set_base_uri:", _base_uri);
     });
 
-    it("sucessed:set_is_blocked_address", async () => {
-
+    it("success: set_is_blocked_address", async () => {
         const nonTransferableProject = await findNonTransferableProject();
-
         const _wallet = Keypair.generate().publicKey;
 
         await program.methods
@@ -128,22 +87,18 @@ describe("config settings", () => {
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
-            .signers([
-                ADMIN_WALLET
-            ])
+            .signers([ADMIN_WALLET])
             .rpc();
 
-        const data = await program.account.projectAccount.fetch(nonTransferableProject)
-
-        let item  = data.isBlockedAddress[0];
-
-        assert(item.key.toBase58() == _wallet.toBase58() && item.value == true, "set_is_blocked_address setting failed!")
-
+        const data = await program.account.projectAccount.fetch(nonTransferableProject);
+        let item = data.isBlockedAddress[0];
+        assert(item.key.toBase58() == _wallet.toBase58() && item.value == true, "set_is_blocked_address failed!");
+        console.log("✅ set_is_blocked_address:", _wallet.toBase58());
     });
 
-    it("sucessed:set_is_blocked_rns_id", async () => {
+    it("success: set_is_blocked_rns_id", async () => {
         const nonTransferableProject = await findNonTransferableProject();
-        const rns_id = "3"
+        const rns_id = "blocked-rns-id-test";
 
         await program.methods
             .setIsBlockedRnsId(rns_id, true)
@@ -151,19 +106,12 @@ describe("config settings", () => {
                 authority: ADMIN_WALLET.publicKey,
                 nonTransferableProject: nonTransferableProject,
             })
-            .signers([
-                ADMIN_WALLET
-            ])
+            .signers([ADMIN_WALLET])
             .rpc();
 
-        const data = await program.account.projectAccount.fetch(nonTransferableProject)
-
-        let item  = data.isBlockedRnsId[0];
-
-        assert(item.key == rns_id && item.value == true, "set_is_blocked_address setting failed!")
-
+        const data = await program.account.projectAccount.fetch(nonTransferableProject);
+        let item = data.isBlockedRnsId[0];
+        assert(item.key == rns_id && item.value == true, "set_is_blocked_rns_id failed!");
+        console.log("✅ set_is_blocked_rns_id:", rns_id);
     });
-
- 
-
 });

@@ -47,4 +47,8 @@ pub enum ErrorCode {
     // 13
     #[msg("Only admin can perform this action.")]
     Unauthorized,
+
+    // 14
+    #[msg("Invalid account data for Token-2022 extension.")]
+    InvalidAccountData,
 }
