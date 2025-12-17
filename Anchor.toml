@@ -8,13 +8,13 @@ skip-lint = false
 rnsdid_core = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
 
 [programs.devnet]
-rnsdid_core = "BCkys1re7iw8NhM7nu6xLChGpgg9iCC8mZity2maL9en"
+rnsdid_core = "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
 
 [programs.testnet]
 rnsdid_core = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
 
 [programs.localnet]
-rnsdid_core = "BCkys1re7iw8NhM7nu6xLChGpgg9iCC8mZity2maL9en"
+rnsdid_core = "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
 
 [registry]
 url = "https://anchor.projectserum.com"
@@ -24,8 +24,7 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-# 运行所有测试（按顺序）- Token-2022 版本
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/1_initialize.test.ts tests/2_collection_config.test.ts tests/3_authorize_mint.test.ts tests/4_airdrop.test.ts tests/6_burn.test.ts tests/12_simple_num_test.test.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/14_optimized_flow.test.ts"
 
 # 运行单个测试
 # test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/1_initialize.test.ts"

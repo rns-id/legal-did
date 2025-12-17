@@ -8,7 +8,7 @@ pub mod utils;
 use instructions::*;
 use state::*;
 
-declare_id!("BCkys1re7iw8NhM7nu6xLChGpgg9iCC8mZity2maL9en");
+declare_id!("JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc");
 
 #[program]
 pub mod rnsdid_core {
@@ -23,13 +23,11 @@ pub mod rnsdid_core {
     pub fn set_mint_price(ctx: Context<SetMintPriceContext>, mint_price: u64) -> Result<()> {
         let project = &mut ctx.accounts.non_transferable_project;
         project.mint_price = mint_price;
-
         msg!(
             "SetMintPrice:collectionId:{}, price:{}",
             project.key(),
             project.mint_price
         );
-
         Ok(())
     }
 
@@ -47,68 +45,7 @@ pub mod rnsdid_core {
         Ok(())
     }
 
-    /// 设置地址黑名单
-    pub fn set_is_blocked_address(
-        ctx: Context<SetIsBlockedAddress>,
-        wallet: Pubkey,
-        is_blocked: bool,
-    ) -> Result<()> {
-        let state = &mut ctx.accounts.non_transferable_project;
-
-        let mut found = false;
-        for blocked_address in state.is_blocked_address.iter_mut() {
-            if blocked_address.key == wallet {
-                blocked_address.value = is_blocked;
-                found = true;
-                break;
-            }
-        }
-        if !found {
-            state.is_blocked_address.push(BlockedAddress {
-                key: wallet,
-                value: is_blocked,
-            });
-        }
-        Ok(())
-    }
-
-    /// 设置RNS ID黑名单
-    pub fn set_is_blocked_rns_id(
-        ctx: Context<SetIsBlockedRnsID>,
-        rns_id: String,
-        is_blocked: bool,
-    ) -> Result<()> {
-        let state = &mut ctx.accounts.non_transferable_project;
-
-        let mut found = false;
-        for blocked_rns_id in state.is_blocked_rns_id.iter_mut() {
-            if blocked_rns_id.key == rns_id {
-                blocked_rns_id.value = is_blocked;
-                found = true;
-                break;
-            }
-        }
-
-        if !found {
-            state.is_blocked_rns_id.push(BlockedRnsID {
-                key: rns_id,
-                value: is_blocked,
-            });
-        }
-
-        Ok(())
-    }
-
-    /// 授权铸造 - 用户支付费用后获得铸造权限
-    pub fn authorize_mint(
-        ctx: Context<AuthorizeMintContext>,
-        rns_id: String,
-        wallet: Pubkey,
-    ) -> Result<()> {
-        authorize_mint::handler(ctx, rns_id, wallet)
-    }
-
-    /// 空投/铸造 DID NFT
+    /// 空投/铸造 DID NFT (一步完成，merkle_root 存入元数据)
     pub fn airdrop(
         ctx: Context<MintNonTransferableNft>,
         rns_id: String,
@@ -123,9 +60,9 @@ pub mod rnsdid_core {
     pub fn burn(
         ctx: Context<BurnNonTransferableNft>,
         rns_id: String,
-        wallet: Pubkey,
+        index: String,
     ) -> Result<()> {
-        burn::handler(ctx, rns_id, wallet)
+        burn::handler(ctx, rns_id, index)
     }
 
     /// 管理员撤销用户的DID
@@ -133,16 +70,8 @@ pub mod rnsdid_core {
         ctx: Context<RevokeNonTransferableNft>,
         rns_id: String,
         wallet: Pubkey,
+        index: String,
     ) -> Result<()> {
-        revoke::handler(ctx, rns_id, wallet)
-    }
-
-    /// 清理已撤销的DID状态
-    pub fn cleanup(
-        ctx: Context<CleanupRevokedNft>,
-        rns_id: String,
-        wallet: Pubkey,
-    ) -> Result<()> {
-        cleanup::handler(ctx, rns_id, wallet)
+        revoke::handler(ctx, rns_id, wallet, index)
     }
 }

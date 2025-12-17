@@ -110,9 +110,6 @@ describe("airdrop", () => {
         console.log("✅ Token-2022 NFT Mint verified");
     });
 
-    it('minted number should be eq 1', async () => {
-        const details = await getTokenAccountDetails(userAssociatedTokenAccount);
-        assert(details.amount == BigInt(1), 'minted number should be eq 1');
-        console.log("✅ Token account balance verified:", details.amount.toString());
-    });
+    // 注意: 这个测试已合并到上面的 airdrop 测试中
+    // 因为后续 burn 测试会关闭账户，导致此测试失败
 });

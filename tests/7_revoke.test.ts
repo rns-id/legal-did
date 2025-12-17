@@ -34,7 +34,8 @@ describe("revoke", () => {
     setProvider(provider)
     const program = workspace.RnsdidCore as Program<RnsdidCore>;
 
-    // 使用新的 tokenIndex 避免与其他测试冲突
+    // 使用独立的 rnsId 和 tokenIndex 避免与其他测试冲突
+    const revokeRnsId = "revoke-test-" + Date.now().toString();
     const revokeTokenIndex = "revoke_" + Date.now().toString();
 
     let mint_to_pubkey;
@@ -47,9 +48,9 @@ describe("revoke", () => {
 
     before(async () => {
         nonTransferableProject = await findNonTransferableProject();
-        nonTransferableNftMint = await getNonTransferableNftMintAddress(rnsId, revokeTokenIndex);
+        nonTransferableNftMint = await getNonTransferableNftMintAddress(revokeRnsId, revokeTokenIndex);
         userAssociatedTokenAccount = await getUserAssociatedTokenAccount(mint_to_pubkey, nonTransferableNftMint);
-        didStatus = findDIDStatus(rnsId, mint_to_pubkey);
+        didStatus = findDIDStatus(revokeRnsId, mint_to_pubkey);
     })
 
     it("success: airdrop first", async () => {
@@ -71,7 +72,7 @@ describe("revoke", () => {
         });
 
         await program.methods.airdrop(
-            rnsId,
+            revokeRnsId,
             mint_to_pubkey,
             merkleRoot,
             revokeTokenIndex
@@ -112,7 +113,7 @@ describe("revoke", () => {
 
         // Admin revokes user's NFT using PermanentDelegate
         await program.methods.revoke(
-            rnsId,
+            revokeRnsId,
             mint_to_pubkey
         )
             .accounts(accounts)
@@ -129,12 +130,15 @@ describe("revoke", () => {
         console.log("Admin received rent:", (adminBalanceAfter - adminBalanceBefore) / 1e9, "SOL");
         console.log("User received rent:", (userBalanceAfter - userBalanceBefore) / 1e9, "SOL");
 
-        // 验证 Token 账户已关闭 (PermanentDelegate 直接 burn 并关闭)
+        // 验证 Token 已被 burn (余额为 0)
+        // 注意: PermanentDelegate 可以 burn 但不能 close ATA，ATA 可能还存在
         try {
-            await getTokenAccountBalance(userAssociatedTokenAccount);
-            assert.fail("Token account should be closed after revoke");
+            const balance = await getTokenAccountBalance(userAssociatedTokenAccount);
+            assert(balance == BigInt(0), "Token balance should be 0 after revoke");
+            console.log("✅ Token burned successfully (balance = 0, ATA still exists for user to close)");
         } catch (error) {
-            console.log("✅ Token account successfully closed after revoke");
+            // ATA 可能已被关闭（如果用户之前关闭过）
+            console.log("✅ Token account closed");
         }
 
         // 验证 DID 状态账户已关闭

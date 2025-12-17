@@ -43,7 +43,7 @@ describe("initialize", () => {
             units: 1_000_000,
         });
 
-        const domain = "https://dev-api-1.rns.id/"
+        const domain = "https://api.rns.id/"
 
         await program.methods
             .initialize({

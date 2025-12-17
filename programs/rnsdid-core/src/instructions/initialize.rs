@@ -47,15 +47,13 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
 
     non_transferable_project.mint_price = 100;
     non_transferable_project.authority = ctx.accounts.authority.key();
+    non_transferable_project.fee_recipient = ctx.accounts.authority.key(); // 默认设置为 authority
     non_transferable_project.bump = ctx.bumps.non_transferable_project;
     non_transferable_project.mint_bump = ctx.bumps.non_transferable_project_mint;
 
     non_transferable_project.name = args.name.clone();
     non_transferable_project.symbol = args.symbol.clone();
     non_transferable_project.base_uri = args.base_uri.clone();
-
-    non_transferable_project.is_blocked_address = Vec::new();
-    non_transferable_project.is_blocked_rns_id = Vec::new();
 
     // 计算 Token-2022 Mint 所需空间（带扩展）
     let extensions = [

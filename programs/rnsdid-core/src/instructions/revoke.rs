@@ -10,12 +10,12 @@ use crate::state::*;
 pub struct RevokeEvent {
     pub rns_id: String,
     pub wallet: Pubkey,
-    pub token_id: String,
+    pub mint: Pubkey,
     pub revoked_by: Pubkey,
 }
 
 #[derive(Accounts)]
-#[instruction(rns_id: String, wallet: Pubkey)]
+#[instruction(rns_id: String, wallet: Pubkey, index: String)]
 pub struct RevokeNonTransferableNft<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -39,22 +39,15 @@ pub struct RevokeNonTransferableNft<'info> {
     )]
     pub user_token_account: InterfaceAccount<'info, TokenAccount>,
 
+    /// CHECK: NFT Mint
     #[account(
         mut,
-        close = authority,
-        constraint = did_status.wallet == wallet,
-        constraint = did_status.status == DIDStatus::Minted as u8 @ ErrorCode::Unauthorized,
         seeds = [
-            DID_STATUS_PREFIX.as_bytes(),
-            &hash_seed(&rns_id)[..32],
-            wallet.key().as_ref()
+            NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(),
+            index.as_bytes()
         ],
-        bump = did_status.bump
+        bump,
     )]
-    pub did_status: Box<Account<'info, DIDStatusAccount>>,
-
-    /// CHECK: NFT Mint
-    #[account(mut)]
     pub non_transferable_nft_mint: UncheckedAccount<'info>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -62,7 +55,12 @@ pub struct RevokeNonTransferableNft<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<RevokeNonTransferableNft>, rns_id: String, wallet: Pubkey) -> Result<()> {
+pub fn handler(
+    ctx: Context<RevokeNonTransferableNft>,
+    rns_id: String,
+    wallet: Pubkey,
+    _index: String,
+) -> Result<()> {
     msg!("=== REVOKE HANDLER START ===");
     msg!("RNS ID: {}", rns_id);
     msg!("Revoked by: {}", ctx.accounts.authority.key());
@@ -73,13 +71,12 @@ pub fn handler(ctx: Context<RevokeNonTransferableNft>, rns_id: String, wallet: P
     ];
 
     // 使用 PermanentDelegate 权限直接 burn 用户的 NFT
-    // Token-2022 的 PermanentDelegate 允许管理员无需用户签名即可 burn
     msg!("Burning token using PermanentDelegate");
     let burn_ix = spl_token_2022::instruction::burn(
         &ctx.accounts.token_program.key(),
         &ctx.accounts.user_token_account.key(),
         &ctx.accounts.non_transferable_nft_mint.key(),
-        &ctx.accounts.non_transferable_project.key(), // PermanentDelegate
+        &ctx.accounts.non_transferable_project.key(),
         &[],
         1,
     )?;
@@ -94,28 +91,33 @@ pub fn handler(ctx: Context<RevokeNonTransferableNft>, rns_id: String, wallet: P
         &[project_signer_seeds],
     )?;
 
-    // 关闭 Token 账户，租金返还给用户
-    msg!("Closing token account - rent to user");
-    let close_ix = spl_token_2022::instruction::close_account(
+    // 关闭 Mint 账户，回收租金给管理员 (需要 MintCloseAuthority 扩展)
+    msg!("Closing mint account to recover rent");
+    let close_mint_ix = spl_token_2022::instruction::close_account(
         &ctx.accounts.token_program.key(),
-        &ctx.accounts.user_token_account.key(),
-        &ctx.accounts.user_account.key(),
-        &ctx.accounts.non_transferable_project.key(), // PermanentDelegate
+        &ctx.accounts.non_transferable_nft_mint.key(),
+        &ctx.accounts.authority.key(), // 租金接收者
+        &ctx.accounts.non_transferable_project.key(), // close authority
         &[],
     )?;
 
     invoke_signed(
-        &close_ix,
+        &close_mint_ix,
         &[
-            ctx.accounts.user_token_account.to_account_info(),
-            ctx.accounts.user_account.to_account_info(),
+            ctx.accounts.non_transferable_nft_mint.to_account_info(),
+            ctx.accounts.authority.to_account_info(),
             ctx.accounts.non_transferable_project.to_account_info(),
         ],
         &[project_signer_seeds],
     )?;
 
+    msg!("Mint account closed, rent recovered");
+
+    // 注意: PermanentDelegate 可以 burn 但不能 close ATA
+    // ATA 留给用户，用户可以自行关闭回收租金
+
     msg!(
-        "RNSRevokeID:_rnsId:{};_wallet:{};_tokenId:{};_revokedBy:{}",
+        "RNSRevokeID:_rnsId:{};_wallet:{};_mint:{};_revokedBy:{}",
         rns_id,
         wallet,
         ctx.accounts.non_transferable_nft_mint.key(),
@@ -125,7 +127,7 @@ pub fn handler(ctx: Context<RevokeNonTransferableNft>, rns_id: String, wallet: P
     emit!(RevokeEvent {
         rns_id,
         wallet,
-        token_id: ctx.accounts.non_transferable_nft_mint.key().to_string(),
+        mint: ctx.accounts.non_transferable_nft_mint.key(),
         revoked_by: ctx.accounts.authority.key(),
     });
 
