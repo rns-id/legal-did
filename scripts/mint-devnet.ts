@@ -26,15 +26,23 @@ const MINT_TO_ADDRESS = new PublicKey(
   "H2sykMLjWjBCtALDYCwnqxALEWtDbBwfCXtz7YThoEne"
 );
 
-// 使用指定的 rnsId
-const rnsId = "082d9a09-aa3c-49dc-ae66-e8800261a2ab";
-const tokenIndex = `idx-${Date.now()}`;
+// 测试 revoke 后重新铸造
+const rnsId = "test-revoke-remint";
+const tokenIndex = "idx-revoke-test-001";
 const merkleRoot = "2d852b3c21e923484a93d3a980a45b7571e89552d58875d40dd17c73216a49d7";
 
-// PDA 计算函数 (v3 版本)
+// PDA 计算函数 (v4 版本 - 带 Collection)
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v3")],
+    [Buffer.from("nt-proj-v4")],
+    PROGRAM_ID
+  );
+  return pda;
+}
+
+function findCollectionMint(): web3.PublicKey {
+  const [pda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("nt-project-mint-v4")],
     PROGRAM_ID
   );
   return pda;
@@ -42,7 +50,7 @@ function findNonTransferableProject(): web3.PublicKey {
 
 function getNftMintAddress(index: string): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-nft-mint-v3"), Buffer.from(index)],
+    [Buffer.from("nt-nft-mint-v4"), Buffer.from(index)],
     PROGRAM_ID
   );
   return pda;
@@ -50,7 +58,7 @@ function getNftMintAddress(index: string): web3.PublicKey {
 
 async function main() {
   console.log("========================================");
-  console.log("RNS DID Devnet 铸造脚本 (Token-2022 v3)");
+  console.log("RNS DID Devnet 铸造脚本 (Token-2022 v4 + Collection)");
   console.log("========================================\n");
 
   // 加载钱包
@@ -78,6 +86,7 @@ async function main() {
 
   // 计算所有 PDA
   const nonTransferableProject = findNonTransferableProject();
+  const collectionMint = findCollectionMint();
   const nonTransferableNftMint = getNftMintAddress(tokenIndex);
   const userTokenAccount = getAssociatedTokenAddressSync(
     nonTransferableNftMint,
@@ -88,6 +97,7 @@ async function main() {
 
   console.log("PDA 地址:");
   console.log("  Project:", nonTransferableProject.toBase58());
+  console.log("  Collection Mint:", collectionMint.toBase58());
   console.log("  NFT Mint:", nonTransferableNftMint.toBase58());
   console.log("  User Token Account:", userTokenAccount.toBase58());
   console.log("");
@@ -116,6 +126,7 @@ async function main() {
         nonTransferableNftMint: nonTransferableNftMint,
         userAccount: MINT_TO_ADDRESS,
         userTokenAccount: userTokenAccount,
+        collectionMint: collectionMint,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         tokenProgram: TOKEN_2022_PROGRAM_ID,
         systemProgram: SystemProgram.programId,

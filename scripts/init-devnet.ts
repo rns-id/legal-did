@@ -17,10 +17,10 @@ const PROGRAM_ID = new PublicKey(
 );
 const RPC_URL = "https://api.devnet.solana.com";
 
-// PDA 计算函数 (v3 版本)
+// PDA 计算函数 (v4 版本 - 带 Collection)
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v3")],
+    [Buffer.from("nt-proj-v4")],
     PROGRAM_ID
   );
   return pda;
@@ -28,7 +28,7 @@ function findNonTransferableProject(): web3.PublicKey {
 
 function getProjectMintAddress(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-project-mint-v3")],
+    [Buffer.from("nt-project-mint-v4")],
     PROGRAM_ID
   );
   return pda;
@@ -36,7 +36,7 @@ function getProjectMintAddress(): web3.PublicKey {
 
 async function main() {
   console.log("========================================");
-  console.log("RNS DID Devnet 初始化脚本 (Token-2022 v3)");
+  console.log("RNS DID Devnet 初始化脚本 (Token-2022 v4 + Collection)");
   console.log("========================================\n");
 
   // 加载钱包

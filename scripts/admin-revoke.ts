@@ -22,13 +22,13 @@ const RPC_URL = "https://api.devnet.solana.com";
 
 // ========== 配置要 Revoke 的 NFT ==========
 const NFT_OWNER = new PublicKey("H2sykMLjWjBCtALDYCwnqxALEWtDbBwfCXtz7YThoEne");
-const rnsId = "082d9a09-aa3c-49dc-ae66-e8800261a2ab";
-const tokenIndex = "idx-1765966593824";
+const rnsId = "test-revoke-remint";
+const tokenIndex = "idx-revoke-test-001";
 // ==========================================
 
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v3")],
+    [Buffer.from("nt-proj-v4")],
     PROGRAM_ID
   );
   return pda;
@@ -36,7 +36,7 @@ function findNonTransferableProject(): web3.PublicKey {
 
 function getNftMintAddress(index: string): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-nft-mint-v3"), Buffer.from(index)],
+    [Buffer.from("nt-nft-mint-v4"), Buffer.from(index)],
     PROGRAM_ID
   );
   return pda;

@@ -25,9 +25,9 @@ const RPC_URL = "https://api.devnet.solana.com";
 // 用户私钥 (base58 格式)
 const USER_PRIVATE_KEY = "ry95ekWNAHr31ERcMWvkrZruzswgDGoZW41bEPRmmz4HHFBtPuVpLTNqVao697L6Q7HuLDybBxe49u5gRRmcdYE";
 
-// 要 Burn 的 NFT 信息
+// 要 Burn 的 NFT 信息 (v4 版本)
 const rnsId = "082d9a09-aa3c-49dc-ae66-e8800261a2ab";
-const tokenIndex = "idx-1765966593824";
+const tokenIndex = "idx-1765969033095"; // v4 铸造的
 
 // 管理员地址 (接收 Mint 租金)
 const ADMIN_ADDRESS = new PublicKey("2fuikT5C2YVctakxoBNQ23NjXzA4kY2cn36Sh6ws3pAt");
@@ -35,7 +35,7 @@ const ADMIN_ADDRESS = new PublicKey("2fuikT5C2YVctakxoBNQ23NjXzA4kY2cn36Sh6ws3pA
 
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v3")],
+    [Buffer.from("nt-proj-v4")],
     PROGRAM_ID
   );
   return pda;
@@ -43,7 +43,7 @@ function findNonTransferableProject(): web3.PublicKey {
 
 function getNftMintAddress(index: string): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-nft-mint-v3"), Buffer.from(index)],
+    [Buffer.from("nt-nft-mint-v4"), Buffer.from(index)],
     PROGRAM_ID
   );
   return pda;

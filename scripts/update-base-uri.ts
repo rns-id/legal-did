@@ -8,7 +8,7 @@ const RPC_URL = "https://api.devnet.solana.com";
 
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v3")],
+    [Buffer.from("nt-proj-v4")],
     PROGRAM_ID
   );
   return pda;

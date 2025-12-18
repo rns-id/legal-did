@@ -1,8 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token_interface::TokenInterface;
+use spl_token_2022::extension::group_pointer::instruction::initialize as init_group_pointer;
 use spl_token_2022::extension::ExtensionType;
 use spl_token_2022::state::Mint as MintState;
+use spl_token_group_interface::instruction::initialize_group;
 
 use crate::state::*;
 
@@ -56,26 +58,40 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
     non_transferable_project.base_uri = args.base_uri.clone();
 
     // 计算 Token-2022 Mint 所需空间（带扩展）
+    // 添加 GroupPointer 扩展用于 Collection 功能
     let extensions = [
         ExtensionType::NonTransferable,
         ExtensionType::PermanentDelegate,
+        ExtensionType::GroupPointer,
     ];
-    let mint_space = ExtensionType::try_calculate_account_len::<MintState>(&extensions).unwrap();
+    let base_space = ExtensionType::try_calculate_account_len::<MintState>(&extensions).unwrap();
+    
+    // Group 数据空间 (TokenGroup TLV)
+    // Type(2) + Length(2) + update_authority(32) + mint(32) + size(8) + max_size(8) = 84
+    let group_space = 84;
+    let mint_space = base_space + group_space;
 
     let rent = Rent::get()?;
     let mint_rent = rent.minimum_balance(mint_space);
+    
+    msg!("Collection Mint space: base={}, group={}, total={}", base_space, group_space, mint_space);
 
     let mint_signer_seeds: &[&[u8]] = &[
         NON_TRANSFERABLE_PROJECT_MINT_PREFIX.as_bytes(),
         &[non_transferable_project.mint_bump],
     ];
 
-    // 1. 创建 Mint 账户
+    let project_signer_seeds: &[&[u8]] = &[
+        NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes(),
+        &[non_transferable_project.bump],
+    ];
+
+    // 1. 创建 Mint 账户 (先用 base_space，后面会 realloc)
     let create_account_ix = anchor_lang::solana_program::system_instruction::create_account(
         &ctx.accounts.authority.key(),
         &ctx.accounts.non_transferable_project_mint.key(),
         mint_rent,
-        mint_space as u64,
+        base_space as u64,
         &ctx.accounts.token_program.key(),
     );
 
@@ -114,7 +130,19 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
         &[mint_signer_seeds],
     )?;
 
-    // 4. 初始化 Mint
+    // 4. 初始化 GroupPointer 扩展 (指向自身作为 Group)
+    invoke_signed(
+        &init_group_pointer(
+            &ctx.accounts.token_program.key(),
+            &ctx.accounts.non_transferable_project_mint.key(),
+            Some(ctx.accounts.non_transferable_project.key()),
+            Some(ctx.accounts.non_transferable_project_mint.key()),
+        )?,
+        &[ctx.accounts.non_transferable_project_mint.to_account_info()],
+        &[mint_signer_seeds],
+    )?;
+
+    // 5. 初始化 Mint
     let init_mint_ix = spl_token_2022::instruction::initialize_mint2(
         &ctx.accounts.token_program.key(),
         &ctx.accounts.non_transferable_project_mint.key(),
@@ -129,11 +157,29 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
         &[mint_signer_seeds],
     )?;
 
+    // 6. 初始化 Group (Collection)
+    invoke_signed(
+        &initialize_group(
+            &ctx.accounts.token_program.key(),
+            &ctx.accounts.non_transferable_project_mint.key(),
+            &ctx.accounts.non_transferable_project_mint.key(),
+            &ctx.accounts.non_transferable_project.key(),
+            Some(ctx.accounts.non_transferable_project.key()),
+            u64::MAX, // max_size - 无限制
+        ),
+        &[
+            ctx.accounts.non_transferable_project_mint.to_account_info(),
+            ctx.accounts.non_transferable_project.to_account_info(),
+        ],
+        &[project_signer_seeds],
+    )?;
+
     msg!("Project initialized with Token-2022");
     msg!("Name: {}", args.name);
     msg!("Symbol: {}", args.symbol);
     msg!("Base URI: {}", args.base_uri);
-    msg!("Extensions: NonTransferable, PermanentDelegate");
+    msg!("Collection Mint: {}", ctx.accounts.non_transferable_project_mint.key());
+    msg!("Extensions: NonTransferable, PermanentDelegate, GroupPointer");
 
     Ok(())
 }

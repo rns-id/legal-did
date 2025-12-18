@@ -17,8 +17,8 @@ const { SYSVAR_RENT_PUBKEY } = web3
 const ADMIN_WALLET = web3.Keypair.generate();
 const USER_WALLET = web3.Keypair.generate();
 
-const NON_TRANSFERABLE_PROJECT_PREFIX = "nt-proj-v3";
-const NON_TRANSFERABLE_NFT_MINT_PREFIX = "nt-nft-mint-v3";
+const NON_TRANSFERABLE_PROJECT_PREFIX = "nt-proj-v4";
+const NON_TRANSFERABLE_NFT_MINT_PREFIX = "nt-nft-mint-v4";
 
 describe("Optimized Flow Test (No DIDStatusAccount)", () => {
     const provider = AnchorProvider.env();
@@ -42,7 +42,7 @@ describe("Optimized Flow Test (No DIDStatusAccount)", () => {
         );
 
         [nonTransferableProjectMint] = PublicKey.findProgramAddressSync(
-            [Buffer.from("nt-project-mint-v3")],
+            [Buffer.from("nt-project-mint-v4")],
             program.programId
         );
 
@@ -115,6 +115,7 @@ describe("Optimized Flow Test (No DIDStatusAccount)", () => {
                 nonTransferableNftMint: nonTransferableNftMint,
                 userAccount: USER_WALLET.publicKey,
                 userTokenAccount: userTokenAccount,
+                collectionMint: nonTransferableProjectMint,
                 associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
                 tokenProgram: TOKEN_2022_PROGRAM_ID,
                 systemProgram: web3.SystemProgram.programId,

@@ -2,9 +2,11 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::TokenInterface;
+use spl_token_2022::extension::group_member_pointer::instruction::initialize as init_group_member_pointer;
 use spl_token_2022::extension::metadata_pointer::instruction::initialize as init_metadata_pointer;
 use spl_token_2022::extension::ExtensionType;
 use spl_token_2022::instruction::initialize_mint_close_authority;
+use spl_token_group_interface::instruction::initialize_member;
 use spl_token_metadata_interface::instruction::initialize as init_token_metadata;
 use spl_token_metadata_interface::state::TokenMetadata;
 
@@ -50,6 +52,14 @@ pub struct MintNonTransferableNft<'info> {
     #[account(mut)]
     pub user_token_account: UncheckedAccount<'info>,
 
+    /// CHECK: Collection Mint (Group)
+    #[account(
+        mut,
+        seeds = [NON_TRANSFERABLE_PROJECT_MINT_PREFIX.as_bytes()],
+        bump = non_transferable_project.mint_bump,
+    )]
+    pub collection_mint: UncheckedAccount<'info>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -79,8 +89,8 @@ pub fn handler(
 
     let rent = Rent::get()?;
 
-    // 元数据信息 - merkle_root 存入 additional_metadata
-    let metadata_uri = format!("{}{}.json", project.base_uri, rns_id);
+    // 元数据信息 - merkle_root 作为 URI 的一部分，不再单独存储
+    let metadata_uri = format!("{}{}.json", project.base_uri, merkle_root);
     let name = format!("LDID #{}", &index[..8.min(index.len())]);
     let symbol = project.symbol.clone();
 
@@ -92,7 +102,7 @@ pub fn handler(
 
     msg!("Creating Token-2022 NFT Mint with NonTransferable + PermanentDelegate + MetadataPointer + MintCloseAuthority");
 
-    // 计算 TokenMetadata 空间
+    // 计算 TokenMetadata 空间 (不再存储 merkle_root，从 URI 解析即可)
     let metadata = TokenMetadata {
         update_authority: Some(ctx.accounts.non_transferable_project.key())
             .try_into()
@@ -101,7 +111,7 @@ pub fn handler(
         name: name.clone(),
         symbol: symbol.clone(),
         uri: metadata_uri.clone(),
-        additional_metadata: vec![("merkle_root".to_string(), merkle_root.clone())],
+        additional_metadata: vec![],
     };
     let metadata_space = metadata
         .tlv_size_of()
@@ -112,13 +122,17 @@ pub fn handler(
         ExtensionType::PermanentDelegate,
         ExtensionType::MetadataPointer,
         ExtensionType::MintCloseAuthority,
+        ExtensionType::GroupMemberPointer,
     ];
+    
+    // GroupMember 数据空间
+    let group_member_space = 68; // mint(32) + group(32) + member_number(4)
 
     let base_space =
         ExtensionType::try_calculate_account_len::<spl_token_2022::state::Mint>(extension_types)
             .map_err(|_| crate::error::ErrorCode::InvalidAccountData)?;
 
-    let total_space = base_space + metadata_space;
+    let total_space = base_space + metadata_space + group_member_space;
     let total_rent = rent.minimum_balance(total_space);
 
     msg!(
@@ -187,6 +201,18 @@ pub fn handler(
         &[mint_signer_seeds],
     )?;
 
+    // GroupMemberPointer - 指向自身作为 Member
+    invoke_signed(
+        &init_group_member_pointer(
+            &ctx.accounts.token_program.key(),
+            &ctx.accounts.non_transferable_nft_mint.key(),
+            Some(ctx.accounts.non_transferable_project.key()),
+            Some(ctx.accounts.non_transferable_nft_mint.key()),
+        )?,
+        &[ctx.accounts.non_transferable_nft_mint.to_account_info()],
+        &[mint_signer_seeds],
+    )?;
+
     // Step 3: InitializeMint2
     invoke_signed(
         &spl_token_2022::instruction::initialize_mint2(
@@ -200,7 +226,6 @@ pub fn handler(
         &[mint_signer_seeds],
     )?;
 
-    // Step 4: 初始化 TokenMetadata (包含 merkle_root)
     invoke_signed(
         &init_token_metadata(
             &ctx.accounts.token_program.key(),
@@ -219,24 +244,25 @@ pub fn handler(
         &[project_signer_seeds],
     )?;
 
-
-    // Step 5: 添加 merkle_root 到 additional_metadata
+    // Step 6: 初始化 GroupMember (加入 Collection)
     invoke_signed(
-        &spl_token_metadata_interface::instruction::update_field(
+        &initialize_member(
             &ctx.accounts.token_program.key(),
-            &ctx.accounts.non_transferable_nft_mint.key(),
-            &ctx.accounts.non_transferable_project.key(),
-            spl_token_metadata_interface::state::Field::Key("merkle_root".to_string()),
-            merkle_root.clone(),
+            &ctx.accounts.non_transferable_nft_mint.key(),  // member mint
+            &ctx.accounts.non_transferable_nft_mint.key(),  // member mint (指向自身)
+            &ctx.accounts.non_transferable_project.key(),   // member mint authority
+            &ctx.accounts.collection_mint.key(),            // group mint
+            &ctx.accounts.non_transferable_project.key(),   // group update authority
         ),
         &[
             ctx.accounts.non_transferable_nft_mint.to_account_info(),
+            ctx.accounts.collection_mint.to_account_info(),
             ctx.accounts.non_transferable_project.to_account_info(),
         ],
         &[project_signer_seeds],
     )?;
 
-    msg!("NFT Mint created with merkle_root in metadata");
+    msg!("NFT Mint created with merkle_root in metadata, joined Collection");
 
     // 2. 创建用户的 Token-2022 ATA (如果不存在)
     if ctx.accounts.user_token_account.data_is_empty() {
