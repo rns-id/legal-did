@@ -2,9 +2,11 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token_interface::TokenInterface;
 use spl_token_2022::extension::group_pointer::instruction::initialize as init_group_pointer;
+use spl_token_2022::extension::metadata_pointer::instruction::initialize as init_metadata_pointer;
 use spl_token_2022::extension::ExtensionType;
 use spl_token_2022::state::Mint as MintState;
 use spl_token_group_interface::instruction::initialize_group;
+use spl_token_metadata_interface::instruction::initialize as init_token_metadata;
 
 use crate::state::*;
 
@@ -58,18 +60,25 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
     non_transferable_project.base_uri = args.base_uri.clone();
 
     // 计算 Token-2022 Mint 所需空间（带扩展）
-    // 添加 GroupPointer 扩展用于 Collection 功能
+    // 添加 GroupPointer + MetadataPointer 扩展用于 Collection 功能
     let extensions = [
         ExtensionType::NonTransferable,
         ExtensionType::PermanentDelegate,
         ExtensionType::GroupPointer,
+        ExtensionType::MetadataPointer,
     ];
     let base_space = ExtensionType::try_calculate_account_len::<MintState>(&extensions).unwrap();
     
     // Group 数据空间 (TokenGroup TLV)
     // Type(2) + Length(2) + update_authority(32) + mint(32) + size(8) + max_size(8) = 84
     let group_space = 84;
-    let mint_space = base_space + group_space;
+    
+    // Collection Metadata 空间计算
+    // 固定部分: update_authority(33) + mint(32) + name_len(4) + symbol_len(4) + uri_len(4) = 77
+    // 动态部分: name + symbol + uri
+    let metadata_space = 77 + args.name.len() + args.symbol.len() + args.base_uri.len() + 4; // +4 for TLV header
+    
+    let mint_space = base_space + group_space + metadata_space;
 
     let rent = Rent::get()?;
     let mint_rent = rent.minimum_balance(mint_space);
@@ -86,7 +95,8 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
         &[non_transferable_project.bump],
     ];
 
-    // 1. 创建 Mint 账户 (先用 base_space，后面会 realloc)
+    // 1. 创建 Mint 账户 (先用 base_space，metadata 和 group 会自动 realloc)
+    // 但需要预付完整租金
     let create_account_ix = anchor_lang::solana_program::system_instruction::create_account(
         &ctx.accounts.authority.key(),
         &ctx.accounts.non_transferable_project_mint.key(),
@@ -142,7 +152,19 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
         &[mint_signer_seeds],
     )?;
 
-    // 5. 初始化 Mint
+    // 5. 初始化 MetadataPointer 扩展 (指向自身存储元数据)
+    invoke_signed(
+        &init_metadata_pointer(
+            &ctx.accounts.token_program.key(),
+            &ctx.accounts.non_transferable_project_mint.key(),
+            Some(ctx.accounts.non_transferable_project.key()),
+            Some(ctx.accounts.non_transferable_project_mint.key()),
+        )?,
+        &[ctx.accounts.non_transferable_project_mint.to_account_info()],
+        &[mint_signer_seeds],
+    )?;
+
+    // 6. 初始化 Mint
     let init_mint_ix = spl_token_2022::instruction::initialize_mint2(
         &ctx.accounts.token_program.key(),
         &ctx.accounts.non_transferable_project_mint.key(),
@@ -157,7 +179,44 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
         &[mint_signer_seeds],
     )?;
 
-    // 6. 初始化 Group (Collection)
+    // 6.5 转账额外租金用于 metadata 和 group realloc
+    let extra_rent = rent.minimum_balance(mint_space) - rent.minimum_balance(base_space);
+    if extra_rent > 0 {
+        let transfer_ix = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.authority.key(),
+            &ctx.accounts.non_transferable_project_mint.key(),
+            extra_rent,
+        );
+        anchor_lang::solana_program::program::invoke(
+            &transfer_ix,
+            &[
+                ctx.accounts.authority.to_account_info(),
+                ctx.accounts.non_transferable_project_mint.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+            ],
+        )?;
+    }
+
+    // 7. 初始化 Collection Metadata
+    invoke_signed(
+        &init_token_metadata(
+            &ctx.accounts.token_program.key(),
+            &ctx.accounts.non_transferable_project_mint.key(),
+            &ctx.accounts.non_transferable_project.key(),
+            &ctx.accounts.non_transferable_project_mint.key(),
+            &ctx.accounts.non_transferable_project.key(),
+            args.name.clone(),
+            args.symbol.clone(),
+            args.base_uri.clone(),
+        ),
+        &[
+            ctx.accounts.non_transferable_project_mint.to_account_info(),
+            ctx.accounts.non_transferable_project.to_account_info(),
+        ],
+        &[project_signer_seeds],
+    )?;
+
+    // 8. 初始化 Group (Collection)
     invoke_signed(
         &initialize_group(
             &ctx.accounts.token_program.key(),
@@ -179,7 +238,7 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
     msg!("Symbol: {}", args.symbol);
     msg!("Base URI: {}", args.base_uri);
     msg!("Collection Mint: {}", ctx.accounts.non_transferable_project_mint.key());
-    msg!("Extensions: NonTransferable, PermanentDelegate, GroupPointer");
+    msg!("Extensions: NonTransferable, PermanentDelegate, GroupPointer, MetadataPointer");
 
     Ok(())
 }

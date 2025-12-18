@@ -102,7 +102,6 @@ pub fn handler(
 
     msg!("Creating Token-2022 NFT Mint with NonTransferable + PermanentDelegate + MetadataPointer + MintCloseAuthority");
 
-    // 计算 TokenMetadata 空间 (不再存储 merkle_root，从 URI 解析即可)
     let metadata = TokenMetadata {
         update_authority: Some(ctx.accounts.non_transferable_project.key())
             .try_into()

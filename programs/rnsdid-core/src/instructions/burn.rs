@@ -107,6 +107,7 @@ pub fn handler(ctx: Context<BurnNonTransferableNft>, rns_id: String, _index: Str
                 ctx.accounts.nft_owner.to_account_info(),
             ],
         )?;
+        
     } else {
         msg!("Token account already closed");
     }

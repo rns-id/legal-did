@@ -4,9 +4,9 @@ use sha2::{Digest, Sha256};
 // ============================================
 // Constants
 // ============================================
-pub const NON_TRANSFERABLE_PROJECT_PREFIX: &str = "nt-proj-v4";
-pub const NON_TRANSFERABLE_PROJECT_MINT_PREFIX: &str = "nt-project-mint-v4";
-pub const NON_TRANSFERABLE_NFT_MINT_PREFIX: &str = "nt-nft-mint-v4";
+pub const NON_TRANSFERABLE_PROJECT_PREFIX: &str = "nt-proj-v5";
+pub const NON_TRANSFERABLE_PROJECT_MINT_PREFIX: &str = "nt-project-mint-v5";
+pub const NON_TRANSFERABLE_NFT_MINT_PREFIX: &str = "nt-nft-mint-v5";
 
 // Project账户大小 (优化后)
 pub const NON_TRANSFERABLE_PROJECT_SIZE: usize = 8 +   // discriminator

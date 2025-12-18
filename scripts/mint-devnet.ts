@@ -31,10 +31,10 @@ const rnsId = "test-revoke-remint";
 const tokenIndex = "idx-revoke-test-001";
 const merkleRoot = "2d852b3c21e923484a93d3a980a45b7571e89552d58875d40dd17c73216a49d7";
 
-// PDA 计算函数 (v4 版本 - 带 Collection)
+// PDA 计算函数 (v5 版本 - 带 Collection + Metadata)
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v4")],
+    [Buffer.from("nt-proj-v5")],
     PROGRAM_ID
   );
   return pda;
@@ -42,7 +42,7 @@ function findNonTransferableProject(): web3.PublicKey {
 
 function findCollectionMint(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-project-mint-v4")],
+    [Buffer.from("nt-project-mint-v5")],
     PROGRAM_ID
   );
   return pda;
@@ -50,7 +50,7 @@ function findCollectionMint(): web3.PublicKey {
 
 function getNftMintAddress(index: string): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-nft-mint-v4"), Buffer.from(index)],
+    [Buffer.from("nt-nft-mint-v5"), Buffer.from(index)],
     PROGRAM_ID
   );
   return pda;

@@ -28,7 +28,7 @@ const merkleRoot = "082d9a09-aa3c-49dc-ae66-e8800261a2ab";
 
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v4")],
+    [Buffer.from("nt-proj-v5")],
     PROGRAM_ID
   );
   return pda;
@@ -36,7 +36,7 @@ function findNonTransferableProject(): web3.PublicKey {
 
 function findCollectionMint(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-project-mint-v4")],
+    [Buffer.from("nt-project-mint-v5")],
     PROGRAM_ID
   );
   return pda;
@@ -44,7 +44,7 @@ function findCollectionMint(): web3.PublicKey {
 
 function getNftMintAddress(index: string): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-nft-mint-v4"), Buffer.from(index)],
+    [Buffer.from("nt-nft-mint-v5"), Buffer.from(index)],
     PROGRAM_ID
   );
   return pda;
