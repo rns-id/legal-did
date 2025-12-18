@@ -829,6 +829,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
+name = "legaldid"
+version = "0.2.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "sha2 0.10.9",
+ "spl-associated-token-account",
+ "spl-pod 0.4.0",
+ "spl-token-2022",
+ "spl-token-group-interface 0.4.2",
+ "spl-token-metadata-interface",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.178"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1207,20 +1221,6 @@ name = "regex-syntax"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
-
-[[package]]
-name = "rnsdid-core"
-version = "0.2.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "sha2 0.10.9",
- "spl-associated-token-account",
- "spl-pod 0.4.0",
- "spl-token-2022",
- "spl-token-group-interface 0.4.2",
- "spl-token-metadata-interface",
-]
 
 [[package]]
 name = "rustc_version"

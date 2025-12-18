@@ -5,16 +5,16 @@ anchor_version = "0.31.1"
 skip-lint = false
 
 [programs.mainnet]
-rnsdid_core = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
+legaldid = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
 
 [programs.devnet]
-rnsdid_core = "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
+legaldid = "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
 
 [programs.testnet]
-rnsdid_core = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
+legaldid = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
 
 [programs.localnet]
-rnsdid_core = "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
+legaldid = "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
 
 [registry]
 url = "https://anchor.projectserum.com"
@@ -24,14 +24,7 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/14_optimized_flow.test.ts"
-
-# 运行单个测试
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/1_initialize.test.ts"
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/4_airdrop.test.ts"
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/6_burn.test.ts"
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/7_revoke.test.ts"
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/12_simple_num_test.test.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/svm/legaldid.test.ts"
 
 [test]
 startup_wait = 120000

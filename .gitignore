@@ -60,4 +60,14 @@ outputs
 tests/utils/keypairs
 
 docs/
-*.md 
+*.md
+
+# Hardhat
+cache
+artifacts
+typechain-types
+coverage
+coverage.json
+
+
+**/keypairs
