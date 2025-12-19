@@ -29,16 +29,20 @@
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
     "@coral-xyz/borsh": "^0.2.6",
+    "@dankelleher/solana-attestation-service-client": "^0.1.0",
     "@metaplex-foundation/js": "^0.20.1",
     "@metaplex-foundation/mpl-token-metadata": "^3.2.1",
     "@metaplex-foundation/umi": "^0.8.7",
     "@metaplex-foundation/umi-bundle-defaults": "^0.8.7",
+    "@solana/kit": "^5.1.0",
+    "@solana/signers": "^5.1.0",
     "@solana/spl-token": "^0.4.9",
     "@solana/spl-token-metadata": "^0.1.6",
     "@solana/web3.js": "^1.95.0",
     "arweave": "^1.15.1",
     "bs58": "^5.0.0",
     "dotenv": "^16.0.3",
+    "sas-lib": "^1.0.10",
     "turbo": "^1.10.12"
   },
   "devDependencies": {

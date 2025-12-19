@@ -1,0 +1,41 @@
+{
+  "credential": "s48kFzxmwWCbKDu7TarEWjj7TsFFZTEsNb3JbVKGQ8t",
+  "schemas": [
+    {
+      "name": "jurisdiction_v2",
+      "address": "Gjkh8f9PpScnMio7FqTqqqd44B6wAySSAhitEDLT7J6G",
+      "layout": { "country": "String" },
+      "cost": 1605800
+    },
+    {
+      "name": "identity_v2",
+      "address": "Hf8WyKSmioUukmTEkWvkCTBjVTKPt7U3U9qJwT8QDZ6o",
+      "layout": { "type": "String", "hash": "String" },
+      "cost": 1598840
+    },
+    {
+      "name": "gender_v2",
+      "address": "FDvomP8mXZUBUFyPoAUes4Kthfj9gxFqtG7XPVc4YveZ",
+      "layout": { "gender": "String" },
+      "cost": 1628640
+    },
+    {
+      "name": "age_verification_v2",
+      "address": "2Ucaf4KcVNtJYCapohbqarKjXKG9Y58KiX962sAQe5rv",
+      "layout": { "over_18": "String", "over_21": "String", "birth_year": "String" },
+      "cost": 1898120
+    },
+    {
+      "name": "sanctions_v2",
+      "address": "5RD5a2GZMMD8qRve1eS5iecdQoauZiqTKYTBQpSNeZnx",
+      "layout": { "clear": "String", "check_date": "String" },
+      "cost": 1745000
+    },
+    {
+      "name": "validity_v2",
+      "address": "3rKiDg1d6s1Du7GEyMM6R2rfCpJoZELSHCfKFwUAJmWo",
+      "layout": { "valid": "String", "issued": "String", "expires": "String" },
+      "cost": 1793720
+    }
+  ]
+}

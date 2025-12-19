@@ -1,0 +1,35 @@
+{
+  "credential": "s48kFzxmwWCbKDu7TarEWjj7TsFFZTEsNb3JbVKGQ8t",
+  "schemas": [
+    {
+      "name": "jurisdiction",
+      "address": "J7gGuUPAYeZaSuaohV6AFW5xxWnAt9YRycwqaBeX7C5x",
+      "cost": 1584920
+    },
+    {
+      "name": "age_verification",
+      "address": "DH5fNMBut8a4WVB1EU6Cjxmu6tY2zCfVdScWLzTvkzzM",
+      "cost": 1884200
+    },
+    {
+      "name": "gender",
+      "address": "GkRy843HFx2bk1tUUKL3HXZE3QjazEizzCbg7nTwnoqR",
+      "cost": 1494440
+    },
+    {
+      "name": "sanctions",
+      "address": "97oRNHQTPWLTvMVL6tXmhgfKchvMmtgR8vSJUsoxYTdC",
+      "cost": 1745000
+    },
+    {
+      "name": "validity",
+      "address": "7HgJ2h5CjPcurCvobarCwndLNyMWohe2UNTGgboLtU8L",
+      "cost": 1724120
+    },
+    {
+      "name": "identity",
+      "address": "6tEyDm3Ce5vSibEwHqs4cPqA8xVip3SLhcteo9FLctBQ",
+      "cost": 1515320
+    }
+  ]
+}
