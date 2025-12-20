@@ -1,0 +1,68 @@
+[
+  {
+    "name": "jurisdiction_v2",
+    "schema": "Gjkh8f9PpScnMio7FqTqqqd44B6wAySSAhitEDLT7J6G",
+    "attestation": "59ZM11H983rWBHjvqDiGKE3Fs6dCeXJCkCaBnbr2EwHa",
+    "data": { "country": "PALAU" },
+    "accountSize": 182,
+    "rent": 2157600,
+    "rentSOL": 0.0021576,
+    "rentUSD": 0.30,
+    "signature": "4nkwcV8BVbdFry5DpF2MUkYwkW36aZjT9YWfRLpTAq86vGGB14dEFy9oHexRjXLQTQQKwLP9GJfGqJdUzzcohioM"
+  },
+  {
+    "name": "identity_v2",
+    "schema": "Hf8WyKSmioUukmTEkWvkCTBjVTKPt7U3U9qJwT8QDZ6o",
+    "attestation": "DFyhZGh9rncxt3js136Y6w1cxQZWDnEDB1tdPdrV6BBD",
+    "data": { "type": "ID", "hash": "b8a5899b" },
+    "accountSize": 191,
+    "rent": 2220240,
+    "rentSOL": 0.00222024,
+    "rentUSD": 0.31,
+    "signature": "48989tDpo1PWi3xcYTbQuxQiAYCGaCymBAD9EuCiePCw3d1X7noTNVJDYeMk8tfF38d4GgXfqi341oSFaaaZWBtp"
+  },
+  {
+    "name": "gender_v2",
+    "schema": "FDvomP8mXZUBUFyPoAUes4Kthfj9gxFqtG7XPVc4YveZ",
+    "attestation": "FjsUZe2jSX84xZ2tMhL5synNhp1KH7ht8YNsjXiWX6RS",
+    "data": { "gender": "Male" },
+    "accountSize": 181,
+    "rent": 2150640,
+    "rentSOL": 0.00215064,
+    "rentUSD": 0.30,
+    "signature": "gVahRcCjF9ddYfX3TWLhf4BbcARxySMseNrBxqp44P57fEUEFEjc2krRTKwXut8qfav8VPG7VAzLoEaft4dDmh3"
+  },
+  {
+    "name": "age_verification_v2",
+    "schema": "2Ucaf4KcVNtJYCapohbqarKjXKG9Y58KiX962sAQe5rv",
+    "attestation": "5dhbBiwoLiXUhFKPcku2K8XBeVWH8VGMPaVEH7en1Q24",
+    "data": { "over_18": "true", "over_21": "true", "birth_year": "1990" },
+    "dataSize": 24,
+    "rent": 2267000,
+    "rentSOL": 0.002267,
+    "rentUSD": 0.32,
+    "signature": "3DkgAqzRLCZw5KT4RT9SfFMahmCtskYWuwUMUzuvU6sid3kCJum8r9HzBkS61aKcXWQtr85Z66edhWddURXPEZ9M"
+  },
+  {
+    "name": "sanctions_v2",
+    "schema": "5RD5a2GZMMD8qRve1eS5iecdQoauZiqTKYTBQpSNeZnx",
+    "attestation": "8wB3m4xDEhXYcjsY9Xet9AJCQiTw5L2EVVHipBGpuKdP",
+    "data": { "clear": "true", "check_date": "2024-12-18" },
+    "dataSize": 22,
+    "rent": 2253080,
+    "rentSOL": 0.00225308,
+    "rentUSD": 0.32,
+    "signature": "59FJdEwbKyi9swP5w7P3fihDWpD3P4XRB6V8vguSXFcSKRWdTRHs361mLTsNH66vNEwcdxRNsDrhBBW4B6zoApAv"
+  },
+  {
+    "name": "validity_v2",
+    "schema": "3rKiDg1d6s1Du7GEyMM6R2rfCpJoZELSHCfKFwUAJmWo",
+    "attestation": "2c4vtoA7kyWcM7tr5GvfAeQ8fP3ddMRxsxpuoJ1kifRr",
+    "data": { "valid": "true", "issued": "2024-12-01", "expires": "2025-12-01" },
+    "dataSize": 17036,
+    "rent": 2350520,
+    "rentSOL": 0.00235052,
+    "rentUSD": 0.33,
+    "signature": "4hzWZHKFQ3dZZyboULqcVC4qt7SzPCL9Y7cShiDQy9KxXmhHSsjfDZLdDBAzY6deHUVc7G851Td18wdpzQ3a537m"
+  }
+]

@@ -1,0 +1,26 @@
+[package]
+name = "legal_attestation"
+version = "0.1.0"
+description = "Legal Attestation on Solana - integrates with Solana Attestation Service"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "legal_attestation"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+[dependencies]
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-spl = "0.31.1"
+borsh = "0.10"
+solana-attestation-service-client = "1.0.9"

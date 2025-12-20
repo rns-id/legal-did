@@ -2,6 +2,23 @@
 
 # .env file
 .env
+.env.*
+!.env.example
+!.env.appStore.example
+
+# Solana keypairs and wallets
+*.json
+id.json
+keypair.json
+wallet.json
+**/keypairs/
+**/*.keypair
+
+# Private keys and secrets
+*.key
+*.pem
+*.p12
+*.pfx
 
 # dependencies
 node_modules
@@ -58,3 +75,21 @@ yarn-error.log
 outputs
 
 tests/utils/keypairs
+
+docs/
+*.md
+
+# Hardhat
+cache
+artifacts
+typechain-types
+coverage
+coverage.json
+
+
+**/keypairs
+
+libs
+api
+
+.openzeppelin
