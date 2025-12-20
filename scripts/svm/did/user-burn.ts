@@ -15,6 +15,10 @@ import {
 } from "@solana/spl-token";
 import * as fs from "fs";
 import bs58 from "bs58";
+import * as dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const { Connection, PublicKey, Keypair, ComputeBudgetProgram, SystemProgram } = web3;
 
@@ -22,8 +26,10 @@ const PROGRAM_ID = new PublicKey("JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc")
 const RPC_URL = "https://api.devnet.solana.com";
 
 // ========== CONFIG ==========
-// User private key (base58 format)
-const USER_PRIVATE_KEY = "ry95ekWNAHr31ERcMWvkrZruzswgDGoZW41bEPRmmz4HHFBtPuVpLTNqVao697L6Q7HuLDybBxe49u5gRRmcdYE";
+// User private key (base58 format) - load from environment
+const USER_PRIVATE_KEY = process.env.USER_PRIVATE_KEY || (() => {
+  throw new Error("Please set USER_PRIVATE_KEY environment variable");
+})();
 
 // NFT info to burn (v4 version)
 const rnsId = "082d9a09-aa3c-49dc-ae66-e8800261a2ab";

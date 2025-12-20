@@ -1,13 +1,19 @@
 import { web3 } from "@coral-xyz/anchor";
 import { createCloseAccountInstruction, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import bs58 from "bs58";
+import * as dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const { Connection, PublicKey, Keypair, Transaction, sendAndConfirmTransaction } = web3;
 
 const RPC_URL = "https://api.devnet.solana.com";
 
-// User private key
-const USER_PRIVATE_KEY = "ry95ekWNAHr31ERcMWvkrZruzswgDGoZW41bEPRmmz4HHFBtPuVpLTNqVao697L6Q7HuLDybBxe49u5gRRmcdYE";
+// User private key - load from environment or Solana CLI
+const USER_PRIVATE_KEY = process.env.USER_PRIVATE_KEY || (() => {
+  throw new Error("Please set USER_PRIVATE_KEY environment variable");
+})();
 
 // ATA to close
 const ATA_ADDRESS = new PublicKey("HtkUwMKr6DQWTtVr553SgEXc1rGhsDFN4UKbKt6kdhK3");

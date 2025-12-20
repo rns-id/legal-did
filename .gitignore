@@ -2,6 +2,23 @@
 
 # .env file
 .env
+.env.*
+!.env.example
+!.env.appStore.example
+
+# Solana keypairs and wallets
+*.json
+id.json
+keypair.json
+wallet.json
+**/keypairs/
+**/*.keypair
+
+# Private keys and secrets
+*.key
+*.pem
+*.p12
+*.pfx
 
 # dependencies
 node_modules
@@ -73,3 +90,6 @@ coverage.json
 **/keypairs
 
 libs
+api
+
+.openzeppelin
