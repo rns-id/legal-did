@@ -20,7 +20,8 @@ contract LegalDIDV3 is
     event RNSAddressAuthorized(string _rnsId, address indexed _wallet);
     event RNSNewID(string _rnsId, address indexed _wallet, uint256 _tokenId);
     event RNSBurnID(string _rnsId, address indexed _wallet, uint256 _tokenId);
-    event RNSRevoked(string _rnsId, address indexed _wallet, uint256 _tokenId);
+    // V4: New OrderId event
+    event OrderProcessed(string orderId, string rnsId, address indexed wallet, uint256 amount);
 
     uint256 public mintPrice;
     uint256 public lastTokenId;
@@ -29,18 +30,26 @@ contract LegalDIDV3 is
 
     bytes32 public constant SECONDARY_ADMIN_ROLE = keccak256("SECONDARY_ADMIN_ROLE");
 
+    // @deprecated - Kept for storage layout compatibility, backend uses event tracking instead
     mapping(string => bool) public isMinted;
+    // @deprecated - Kept for storage layout compatibility, backend uses event tracking instead
     mapping(string => bool) public isAuthorized;
+
     mapping(string => uint256) public numMinted;
+    // @deprecated - Kept for storage layout compatibility, blacklist feature removed
     mapping(address => bool) private isBlockedAddress;
+    // @deprecated - Kept for storage layout compatibility, blacklist feature removed
     mapping(string => bool) private isBlockedRnsID;
 
     mapping(uint256 => bytes32) public tokenIdToMerkle;
     mapping(uint256 => address) public tokenIdToWallet;
     mapping(uint256 => string) public tokenIdToRnsId;
 
-    // 预留存储空间，未来添加新变量时从这里扣除
-    uint256[50] private __gap;
+    // V4: wallet → rnsId mapping for RNSID validation
+    mapping(address => string) public walletToRnsId;
+
+    // Reserved storage gap for future upgrades
+    uint256[49] private __gap;
 
     function initialize() public initializer {
         __ERC721_init("Legal DID Test", "LDIDTest");
@@ -71,22 +80,41 @@ contract LegalDIDV3 is
         baseURI = _URI;
     }
 
-    function setIsBlockedAddress(address _wallet, bool _isBlocked) public onlyRole(SECONDARY_ADMIN_ROLE) {
-        isBlockedAddress[_wallet] = _isBlocked;
-    }
-
-    function setIsBlockedRnsID(string memory _rnsId, bool _isBlocked) public onlyRole(SECONDARY_ADMIN_ROLE) {
-        isBlockedRnsID[_rnsId] = _isBlocked;
-    }
+    // @deprecated - setIsBlockedAddress removed
+    // @deprecated - setIsBlockedRnsID removed
 
     function setTokenIdToMerkle(uint256 tokenId, bytes32 _merkelRoot) external onlyRole(SECONDARY_ADMIN_ROLE) {
         tokenIdToMerkle[tokenId] = _merkelRoot;
     }
 
-    function authorizeMint(string memory _rnsId, address _wallet) external payable nonReentrant {
-        require(!isBlockedAddress[_wallet], "the wallet is blacklisted");
-        require(!isBlockedRnsID[_rnsId], "the LDID is blacklisted");
+    // ============ authorizeMint compatibility ============
 
+    /// @notice Legacy interface, kept for backward compatibility
+    function authorizeMint(string memory _rnsId, address _wallet) external payable nonReentrant {
+        
+        string memory idAddressKey = getIdentityKey(_rnsId, _wallet);
+        require(!isAuthorized[idAddressKey], "Authorization is in process, please wait.");
+
+        uint256 fee = mintPrice;
+        uint256 numMintedForID = numMinted[_rnsId];
+
+        if (hasRole(SECONDARY_ADMIN_ROLE, msg.sender)) {
+            fee = 0;
+        }
+        require(msg.value >= fee, "insufficient fund");
+
+        numMinted[_rnsId] = numMintedForID.add(1);
+        isAuthorized[idAddressKey] = true;
+        emit RNSAddressAuthorized(_rnsId, _wallet);
+
+    }
+
+    function authorizeMintV3(
+        string memory _rnsId,
+        address _wallet,
+        string memory _orderId
+    ) external payable nonReentrant {
+        
         uint256 fee = mintPrice;
 
         if (hasRole(SECONDARY_ADMIN_ROLE, msg.sender)) {
@@ -94,17 +122,24 @@ contract LegalDIDV3 is
         }
         require(msg.value >= fee, "insufficient fund");
 
-        string memory idAddressKey = getIdentityKey(_rnsId, _wallet);
-        numMinted[_rnsId] = numMinted[_rnsId].add(1);
-        isAuthorized[idAddressKey] = true;
+        // V4: Removed isAuthorized write, using event tracking instead
         emit RNSAddressAuthorized(_rnsId, _wallet);
-    }
+        emit OrderProcessed(_orderId, _rnsId, _wallet, msg.value);
 
-    function airdrop(string memory _rnsId, address _wallet, bytes32 _merkelRoot) external onlyRole(SECONDARY_ADMIN_ROLE) nonReentrant {
+    }
+    
+    // ============ airdrop with RNSID validation ============
+
+    function airdrop(
+        string memory _rnsId,
+        address _wallet,
+        bytes32 _merkelRoot
+    ) external onlyRole(SECONDARY_ADMIN_ROLE) nonReentrant {
+        string memory idAddressKey = getIdentityKey(_rnsId, _wallet);
+        require(!isMinted[idAddressKey], "One LDID can only mint once to the same wallet.");
         require(!isBlockedAddress[_wallet], "the wallet is blacklisted");
         require(!isBlockedRnsID[_rnsId], "the LDID is blacklisted");
 
-        string memory idAddressKey = getIdentityKey(_rnsId, _wallet);
         isMinted[idAddressKey] = true;
         uint256 tokenId = lastTokenId.add(1);
         lastTokenId = tokenId;
@@ -118,27 +153,33 @@ contract LegalDIDV3 is
         emit RNSNewID(_rnsId, _wallet, tokenId);
     }
 
-    // V3: 管理员 revoke 功能
-    function revoke(uint256 _tokenId) external onlyRole(SECONDARY_ADMIN_ROLE) {
-        _requireMinted(_tokenId);
+    function airdropV3(
+        string memory _rnsId,
+        address _wallet,
+        bytes32 _merkelRoot
+    ) external onlyRole(SECONDARY_ADMIN_ROLE) nonReentrant {
+        // V4: RNSID validation - same wallet can only hold LDID from the same natural person
+        if (balanceOf(_wallet) > 0) {
+            require(
+                keccak256(bytes(walletToRnsId[_wallet])) == keccak256(bytes(_rnsId)),
+                "Wallet already holds LDID from different identity"
+            );
+        } else {
+            // First mint, record wallet → rnsId mapping
+            walletToRnsId[_wallet] = _rnsId;
+        }
 
-        address wallet = tokenIdToWallet[_tokenId];
-        string memory rnsId = tokenIdToRnsId[_tokenId];
-        string memory idAddressKey = getIdentityKey(rnsId, wallet);
+        // V4: Removed isMinted write, using event tracking instead
+        uint256 tokenId = lastTokenId.add(1);
+        lastTokenId = tokenId;
 
-        // 清理状态
-        isMinted[idAddressKey] = false;
-        isAuthorized[idAddressKey] = false;
+        _safeMint(_wallet, tokenId);
 
-        emit RNSRevoked(rnsId, wallet, _tokenId);
+        tokenIdToMerkle[tokenId] = _merkelRoot;
+        tokenIdToWallet[tokenId] = _wallet;
+        tokenIdToRnsId[tokenId] = _rnsId;
 
-        // 清理 token 数据
-        tokenIdToMerkle[_tokenId] = bytes32(0);
-        tokenIdToWallet[_tokenId] = address(0);
-        tokenIdToRnsId[_tokenId] = "";
-
-        // 销毁 NFT（绕过 owner 检查）
-        _burn(_tokenId);
+        emit RNSNewID(_rnsId, _wallet, tokenId);
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -176,16 +217,19 @@ contract LegalDIDV3 is
         super.burn(_tokenId);
         address wallet = tokenIdToWallet[_tokenId];
         string memory rnsId = tokenIdToRnsId[_tokenId];
-        string memory idAddressKey = getIdentityKey(rnsId, wallet);
 
-        isMinted[idAddressKey] = false;
-        isAuthorized[idAddressKey] = false;
+        // V4: Removed isMinted/isAuthorized cleanup, using event tracking instead
 
-        emit RNSBurnID(tokenIdToRnsId[_tokenId], tokenIdToWallet[_tokenId], _tokenId);
+        emit RNSBurnID(rnsId, wallet, _tokenId);
 
         tokenIdToMerkle[_tokenId] = bytes32(0);
         tokenIdToWallet[_tokenId] = address(0);
         tokenIdToRnsId[_tokenId] = "";
+
+        // V4: Clear walletToRnsId mapping if wallet has no other LDID
+        if (balanceOf(wallet) == 0) {
+            walletToRnsId[wallet] = "";
+        }
     }
 
     function _beforeTokenTransfer(
@@ -195,11 +239,8 @@ contract LegalDIDV3 is
         uint256 batchSize
     ) internal virtual override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         if (from != address(0)) {
-            // 允许管理员 revoke（通过 _burn 调用）
-            if (!hasRole(SECONDARY_ADMIN_ROLE, msg.sender)) {
-                address owner = ownerOf(firstTokenId);
-                require(owner == msg.sender, "Only the owner of LDID can burn it.");
-            }
+            address owner = ownerOf(firstTokenId);
+            require(owner == msg.sender, "Only the owner of LDID can burn it.");
             require(to == address(0) || from == address(0), "A LDID can only be airdropped or burned.");
         }
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);

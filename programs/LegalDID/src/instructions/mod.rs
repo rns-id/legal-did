@@ -4,10 +4,8 @@ pub mod airdrop;
 pub mod authorize_mint;
 pub mod burn;
 pub mod initialize;
-pub mod revoke;
 
 pub use airdrop::*;
 pub use authorize_mint::*;
 pub use burn::*;
 pub use initialize::*;
-pub use revoke::*;

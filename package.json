@@ -91,6 +91,7 @@
     "chai": "^4.3.4",
     "ethers": "^6.13.0",
     "hardhat": "^2.22.0",
+    "hardhat-contract-sizer": "^2.10.1",
     "hardhat-gas-reporter": "^1.0.8",
     "mocha": "^10.7.0",
     "prettier": "^2.6.2",

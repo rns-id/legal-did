@@ -102,13 +102,4 @@ pub mod legaldid {
         burn::handler(ctx, rns_id, index)
     }
 
-    /// Admin revokes user's DID
-    pub fn revoke(
-        ctx: Context<RevokeNonTransferableNft>,
-        rns_id: String,
-        wallet: Pubkey,
-        index: String,
-    ) -> Result<()> {
-        revoke::handler(ctx, rns_id, wallet, index)
-    }
 }
