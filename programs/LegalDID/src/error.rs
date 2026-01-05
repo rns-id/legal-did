@@ -67,4 +67,8 @@ pub enum ErrorCode {
     // 18
     #[msg("Operator not found.")]
     OperatorNotFound,
+
+    // 19
+    #[msg("Invalid mint account - does not match expected PDA.")]
+    InvalidMintAccount,
 }

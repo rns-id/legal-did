@@ -7,18 +7,16 @@ use crate::state::*;
 
 #[event]
 pub struct BurnEvent {
-    pub rns_id: String,
     pub wallet: Pubkey,
     pub mint: Pubkey,
 }
 
 #[derive(Accounts)]
-#[instruction(rns_id: String, index: String)]
 pub struct BurnNonTransferableNft<'info> {
     #[account(mut)]
     pub nft_owner: Signer<'info>,
 
-    /// CHECK: Admin account to receive ATA rent (optional)
+    /// CHECK: Admin account to receive Mint rent
     #[account(mut)]
     pub authority: UncheckedAccount<'info>,
 
@@ -29,19 +27,12 @@ pub struct BurnNonTransferableNft<'info> {
     )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
 
-    /// CHECK: User's Token Account
+    /// CHECK: User's Token Account - validated by token program
     #[account(mut)]
     pub user_token_account: UncheckedAccount<'info>,
 
-    /// CHECK: NFT Mint
-    #[account(
-        mut,
-        seeds = [
-            NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(),
-            index.as_bytes()
-        ],
-        bump,
-    )]
+    /// CHECK: NFT Mint - passed directly, no PDA derivation needed
+    #[account(mut)]
     pub non_transferable_nft_mint: UncheckedAccount<'info>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -49,9 +40,9 @@ pub struct BurnNonTransferableNft<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<BurnNonTransferableNft>, rns_id: String, _index: String) -> Result<()> {
+pub fn handler(ctx: Context<BurnNonTransferableNft>) -> Result<()> {
     msg!("=== BURN HANDLER START ===");
-    msg!("RNS ID: {}", rns_id);
+    msg!("Mint: {}", ctx.accounts.non_transferable_nft_mint.key());
 
     let token_account_info = ctx.accounts.user_token_account.to_account_info();
 
@@ -95,7 +86,7 @@ pub fn handler(ctx: Context<BurnNonTransferableNft>, rns_id: String, _index: Str
         let close_ata_ix = spl_token_2022::instruction::close_account(
             &ctx.accounts.token_program.key(),
             &ctx.accounts.user_token_account.key(),
-            &ctx.accounts.nft_owner.key(), // Refund rent to user
+            &ctx.accounts.nft_owner.key(),
             &ctx.accounts.nft_owner.key(),
             &[],
         )?;
@@ -122,8 +113,8 @@ pub fn handler(ctx: Context<BurnNonTransferableNft>, rns_id: String, _index: Str
     let close_mint_ix = spl_token_2022::instruction::close_account(
         &ctx.accounts.token_program.key(),
         &ctx.accounts.non_transferable_nft_mint.key(),
-        &ctx.accounts.authority.key(), // Rent recipient
-        &ctx.accounts.non_transferable_project.key(), // close authority
+        &ctx.accounts.authority.key(),
+        &ctx.accounts.non_transferable_project.key(),
         &[],
     )?;
 
@@ -139,15 +130,7 @@ pub fn handler(ctx: Context<BurnNonTransferableNft>, rns_id: String, _index: Str
 
     msg!("Mint account closed, rent recovered");
 
-    msg!(
-        "RNSBurnID:_rnsId:{};_wallet:{};_mint:{}",
-        rns_id,
-        ctx.accounts.nft_owner.key(),
-        ctx.accounts.non_transferable_nft_mint.key()
-    );
-
     emit!(BurnEvent {
-        rns_id,
         wallet: ctx.accounts.nft_owner.key(),
         mint: ctx.accounts.non_transferable_nft_mint.key(),
     });

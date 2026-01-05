@@ -15,9 +15,10 @@ pub const MAX_OPERATORS: usize = 5;
 pub const NON_TRANSFERABLE_PROJECT_SIZE: usize = 8 +   // discriminator
     32 +    // authority (admin)
     8 +     // mint_price
-    32 +    // fee_recipient
+    32 +    // destination (renamed from fee_recipient)
     1 +     // bump
     1 +     // mint_bump
+    8 +     // last_token_id (like EVM lastTokenId)
     100 +   // name
     100 +   // symbol
     200 +   // base_uri
@@ -45,9 +46,10 @@ pub const TOKEN2022_MINT_SIZE: usize = 234;
 pub struct ProjectAccount {
     pub authority: Pubkey,      // Super admin (DEFAULT_ADMIN_ROLE)
     pub mint_price: u64,
-    pub fee_recipient: Pubkey,
+    pub destination: Pubkey,    // Fee destination (renamed from fee_recipient)
     pub bump: u8,
     pub mint_bump: u8,
+    pub last_token_id: u64,     // Auto-increment token ID (like EVM lastTokenId)
     pub name: String,
     pub symbol: String,
     pub base_uri: String,
@@ -81,6 +83,13 @@ pub struct SetBaseURI<'info> {
 
 #[derive(Accounts)]
 pub struct SetFeeRecipient<'info> {
+    #[account(mut, has_one = authority)]
+    pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct SetFundDestination<'info> {
     #[account(mut, has_one = authority)]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
     pub authority: Signer<'info>,

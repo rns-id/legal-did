@@ -39,9 +39,17 @@ pub mod legaldid {
     }
 
     /// Set fee recipient (admin only)
+    /// @deprecated Use set_destination instead
     pub fn set_fee_recipient(ctx: Context<SetFeeRecipient>, fee_recipient: Pubkey) -> Result<()> {
         let state = &mut ctx.accounts.non_transferable_project;
-        state.fee_recipient = fee_recipient;
+        state.destination = fee_recipient;
+        Ok(())
+    }
+
+    /// Set fund destination address (admin only)
+    pub fn set_fund_destination(ctx: Context<SetFundDestination>, destination: Pubkey) -> Result<()> {
+        let state = &mut ctx.accounts.non_transferable_project;
+        state.destination = destination;
         Ok(())
     }
 
@@ -77,29 +85,29 @@ pub mod legaldid {
     /// User pays to request DID mint (emits event, backend reviews and mints)
     pub fn authorize_mint(
         ctx: Context<AuthorizeMint>,
-        rns_id: String,
-        index: String,
+        order_id: String,
     ) -> Result<()> {
-        authorize_mint::handler(ctx, rns_id, index)
+        authorize_mint::handler(ctx, order_id)
     }
 
     pub fn airdrop(
         ctx: Context<MintNonTransferableNft>,
-        rns_id: String,
+        order_id: String,
         wallet: Pubkey,
         merkle_root: String,
-        index: String,
     ) -> Result<()> {
-        airdrop::handler(ctx, rns_id, wallet, merkle_root, index)
+        airdrop::handler(ctx, order_id, wallet, merkle_root)
     }
 
     /// User voluntarily burns their own DID
-    pub fn burn(
-        ctx: Context<BurnNonTransferableNft>,
-        rns_id: String,
-        index: String,
-    ) -> Result<()> {
-        burn::handler(ctx, rns_id, index)
+    /// Uses mint address directly - no order_id needed since mint is already known
+    pub fn burn(ctx: Context<BurnNonTransferableNft>) -> Result<()> {
+        burn::handler(ctx)
+    }
+
+    /// Withdraw accumulated fees to fee_recipient (admin only)
+    pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
+        withdraw::handler(ctx)
     }
 
 }

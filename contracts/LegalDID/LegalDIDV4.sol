@@ -7,8 +7,9 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Burnab
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
-contract LegalDIDV3 is
+contract LegalDIDV4 is
     ERC721Upgradeable,
     ERC721EnumerableUpgradeable,
     ERC721BurnableUpgradeable,
@@ -16,12 +17,19 @@ contract LegalDIDV3 is
     ReentrancyGuardUpgradeable
 {
     using SafeMathUpgradeable for uint256;
+    using StringsUpgradeable for uint256;
 
+    // ============ Legacy Events (kept for compatibility) ============
     event RNSAddressAuthorized(string _rnsId, address indexed _wallet);
     event RNSNewID(string _rnsId, address indexed _wallet, uint256 _tokenId);
     event RNSBurnID(string _rnsId, address indexed _wallet, uint256 _tokenId);
-    // V4: New OrderId event
     event OrderProcessed(string orderId, string rnsId, address indexed wallet, uint256 amount);
+
+    // ============ V4 Events (orderId based tracking) ============
+    event AuthorizeMintV4(string indexed orderId, address indexed wallet, uint256 amount);
+    event AirdropV4(string indexed orderId, address indexed wallet, uint256 tokenId, bytes32 merkleRoot);
+    event BurnV4(address indexed wallet, uint256 tokenId);
+    event WithdrawV4(address indexed recipient, uint256 amount);
 
     uint256 public mintPrice;
     uint256 public lastTokenId;
@@ -30,22 +38,23 @@ contract LegalDIDV3 is
 
     bytes32 public constant SECONDARY_ADMIN_ROLE = keccak256("SECONDARY_ADMIN_ROLE");
 
-    // @deprecated - Kept for storage layout compatibility, backend uses event tracking instead
+    // @deprecated - Kept for storage layout compatibility
     mapping(string => bool) public isMinted;
-    // @deprecated - Kept for storage layout compatibility, backend uses event tracking instead
+    // @deprecated - Kept for storage layout compatibility
     mapping(string => bool) public isAuthorized;
 
     mapping(string => uint256) public numMinted;
-    // @deprecated - Kept for storage layout compatibility, blacklist feature removed
+    // @deprecated - Kept for storage layout compatibility
     mapping(address => bool) private isBlockedAddress;
-    // @deprecated - Kept for storage layout compatibility, blacklist feature removed
+    // @deprecated - Kept for storage layout compatibility
     mapping(string => bool) private isBlockedRnsID;
 
     mapping(uint256 => bytes32) public tokenIdToMerkle;
     mapping(uint256 => address) public tokenIdToWallet;
+    // @deprecated - Kept for storage layout compatibility, V4 uses event tracking
     mapping(uint256 => string) public tokenIdToRnsId;
 
-    // V4: wallet → rnsId mapping for RNSID validation
+    // @deprecated - Kept for storage layout compatibility, V4 moves validation to backend
     mapping(address => string) public walletToRnsId;
 
     // Reserved storage gap for future upgrades
@@ -80,18 +89,11 @@ contract LegalDIDV3 is
         baseURI = _URI;
     }
 
-    // @deprecated - setIsBlockedAddress removed
-    // @deprecated - setIsBlockedRnsID removed
-
-    function setTokenIdToMerkle(uint256 tokenId, bytes32 _merkelRoot) external onlyRole(SECONDARY_ADMIN_ROLE) {
-        tokenIdToMerkle[tokenId] = _merkelRoot;
-    }
-
-    // ============ authorizeMint compatibility ============
+    // ============ Legacy authorizeMint (kept for compatibility) ============
 
     /// @notice Legacy interface, kept for backward compatibility
+    /// @dev DEPRECATED: Use authorizeMintV4() for new business
     function authorizeMint(string memory _rnsId, address _wallet) external payable nonReentrant {
-        
         string memory idAddressKey = getIdentityKey(_rnsId, _wallet);
         require(!isAuthorized[idAddressKey], "Authorization is in process, please wait.");
 
@@ -106,15 +108,14 @@ contract LegalDIDV3 is
         numMinted[_rnsId] = numMintedForID.add(1);
         isAuthorized[idAddressKey] = true;
         emit RNSAddressAuthorized(_rnsId, _wallet);
-
     }
+    
 
-    function authorizeMintV3(
-        string memory _rnsId,
-        address _wallet,
-        string memory _orderId
+    /// @notice V4 interface - orderId based tracking, no rnsId
+    function authorizeMintV4(
+        string memory _orderId,
+        address _wallet
     ) external payable nonReentrant {
-        
         uint256 fee = mintPrice;
 
         if (hasRole(SECONDARY_ADMIN_ROLE, msg.sender)) {
@@ -122,14 +123,13 @@ contract LegalDIDV3 is
         }
         require(msg.value >= fee, "insufficient fund");
 
-        // V4: Removed isAuthorized write, using event tracking instead
-        emit RNSAddressAuthorized(_rnsId, _wallet);
-        emit OrderProcessed(_orderId, _rnsId, _wallet, msg.value);
-
+        emit AuthorizeMintV4(_orderId, _wallet, msg.value);
     }
-    
-    // ============ airdrop with RNSID validation ============
 
+    // ============ Legacy airdrop (kept for compatibility) ============
+
+    /// @notice Legacy interface, kept for backward compatibility
+    /// @dev DEPRECATED: Use airdropV4() for new business
     function airdrop(
         string memory _rnsId,
         address _wallet,
@@ -153,23 +153,12 @@ contract LegalDIDV3 is
         emit RNSNewID(_rnsId, _wallet, tokenId);
     }
 
-    function airdropV3(
-        string memory _rnsId,
+    /// @notice V4 interface - orderId based tracking, no on-chain rnsId storage or validation
+    function airdropV4(
+        string memory _orderId,
         address _wallet,
         bytes32 _merkelRoot
     ) external onlyRole(SECONDARY_ADMIN_ROLE) nonReentrant {
-        // V4: RNSID validation - same wallet can only hold LDID from the same natural person
-        if (balanceOf(_wallet) > 0) {
-            require(
-                keccak256(bytes(walletToRnsId[_wallet])) == keccak256(bytes(_rnsId)),
-                "Wallet already holds LDID from different identity"
-            );
-        } else {
-            // First mint, record wallet → rnsId mapping
-            walletToRnsId[_wallet] = _rnsId;
-        }
-
-        // V4: Removed isMinted write, using event tracking instead
         uint256 tokenId = lastTokenId.add(1);
         lastTokenId = tokenId;
 
@@ -177,18 +166,32 @@ contract LegalDIDV3 is
 
         tokenIdToMerkle[tokenId] = _merkelRoot;
         tokenIdToWallet[tokenId] = _wallet;
-        tokenIdToRnsId[tokenId] = _rnsId;
 
-        emit RNSNewID(_rnsId, _wallet, tokenId);
+        emit AirdropV4(_orderId, _wallet, tokenId, _merkelRoot);
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
     }
 
+    /// @dev Convert bytes32 to hex string (without 0x prefix)
+    function _toHexString(bytes32 data) internal pure returns (string memory) {
+        bytes memory alphabet = "0123456789abcdef";
+        bytes memory str = new bytes(64);
+        for (uint256 i = 0; i < 32; i++) {
+            str[i * 2] = alphabet[uint8(data[i] >> 4)];
+            str[i * 2 + 1] = alphabet[uint8(data[i] & 0x0f)];
+        }
+        return string(str);
+    }
+
+    /// @notice V4: tokenURI uses merkleRoot instead of tokenId for better identity binding
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenIdToRnsId[tokenId], ".json")) : "";
+        bytes32 merkle = tokenIdToMerkle[tokenId];
+        return bytes(baseURI).length > 0 
+            ? string(abi.encodePacked(baseURI, _toHexString(merkle), ".json")) 
+            : "";
     }
 
     function tokenMerkleRoot(uint256 tokenId) public view virtual returns (bytes32) {
@@ -201,7 +204,9 @@ contract LegalDIDV3 is
     }
 
     function withdraw() public onlyRole(DEFAULT_ADMIN_ROLE) {
-        payable(destination).transfer(address(this).balance);
+        uint256 balance = address(this).balance;
+        payable(destination).transfer(balance);
+        emit WithdrawV4(destination, balance);
     }
 
     function supportsInterface(bytes4 _interfaceId)
@@ -216,20 +221,14 @@ contract LegalDIDV3 is
     function burn(uint256 _tokenId) public override(ERC721BurnableUpgradeable) {
         super.burn(_tokenId);
         address wallet = tokenIdToWallet[_tokenId];
-        string memory rnsId = tokenIdToRnsId[_tokenId];
 
-        // V4: Removed isMinted/isAuthorized cleanup, using event tracking instead
-
-        emit RNSBurnID(rnsId, wallet, _tokenId);
+        // V4: Only emit event, no state cleanup needed
+        emit BurnV4(wallet, _tokenId);
 
         tokenIdToMerkle[_tokenId] = bytes32(0);
         tokenIdToWallet[_tokenId] = address(0);
+        // V4: tokenIdToRnsId not used, but clear for consistency
         tokenIdToRnsId[_tokenId] = "";
-
-        // V4: Clear walletToRnsId mapping if wallet has no other LDID
-        if (balanceOf(wallet) == 0) {
-            walletToRnsId[wallet] = "";
-        }
     }
 
     function _beforeTokenTransfer(

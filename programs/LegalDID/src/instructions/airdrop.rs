@@ -14,13 +14,15 @@ use crate::state::*;
 
 #[event]
 pub struct AirdropEvent {
-    pub rns_id: String,
+    pub order_id: String,       // Business tracking (like EVM orderId)
+    pub token_id: u64,          // Auto-increment ID (like EVM tokenId)
     pub wallet: Pubkey,
     pub mint: Pubkey,
+    pub merkle_root: String,
 }
 
 #[derive(Accounts)]
-#[instruction(rns_id: String, wallet: Pubkey, merkle_root: String, index: String)]
+#[instruction(order_id: String, wallet: Pubkey, merkle_root: String)]
 pub struct MintNonTransferableNft<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -34,14 +36,9 @@ pub struct MintNonTransferableNft<'info> {
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
 
     /// CHECK: Token-2022 NFT Mint account, requires manual extension initialization
-    #[account(
-        mut,
-        seeds = [
-            NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(),
-            index.as_bytes()
-        ],
-        bump,
-    )]
+    /// Uses token_id (auto-increment) as PDA seed, like EVM tokenId
+    /// The actual token_id is computed as last_token_id + 1 in handler
+    #[account(mut)]
     pub non_transferable_nft_mint: UncheckedAccount<'info>,
 
     /// CHECK: User account
@@ -68,30 +65,46 @@ pub struct MintNonTransferableNft<'info> {
 
 pub fn handler(
     ctx: Context<MintNonTransferableNft>,
-    rns_id: String,
+    order_id: String,
     wallet: Pubkey,
     merkle_root: String,
-    index: String,
 ) -> Result<()> {
-    let project = &ctx.accounts.non_transferable_project;
+    let project = &mut ctx.accounts.non_transferable_project;
+    
+    // Auto-increment token_id (like EVM lastTokenId++)
+    let token_id = project.last_token_id + 1;
+    project.last_token_id = token_id;
+    
     let project_bump = project.bump;
     let project_signer_seeds: &[&[u8]] = &[
         NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes(),
         &[project_bump],
     ];
 
-    let mint_bump = ctx.bumps.non_transferable_nft_mint;
+    // Use token_id as PDA seed (like EVM tokenId)
+    let token_id_bytes = token_id.to_le_bytes();
+    let (expected_mint, mint_bump) = Pubkey::find_program_address(
+        &[NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(), &token_id_bytes],
+        ctx.program_id,
+    );
+    
+    // Verify the provided mint account matches expected PDA
+    require!(
+        ctx.accounts.non_transferable_nft_mint.key() == expected_mint,
+        crate::error::ErrorCode::InvalidMintAccount
+    );
+    
     let mint_signer_seeds: &[&[u8]] = &[
         NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(),
-        index.as_bytes(),
+        &token_id_bytes,
         &[mint_bump],
     ];
 
     let rent = Rent::get()?;
 
-    // Metadata info - merkle_root as part of URI, no longer stored separately
+    // Metadata info - merkle_root as part of URI
     let metadata_uri = format!("{}{}.json", project.base_uri, merkle_root);
-    let name = format!("LDID #{}", &index[..8.min(index.len())]);
+    let name = format!("LDID #{}", token_id);  // Use token_id in name
     let symbol = project.symbol.clone();
 
     // 1. Create Token-2022 NFT Mint (if not exists)
@@ -310,19 +323,15 @@ pub fn handler(
     )?;
 
     msg!("NFT minted successfully (NonTransferable, merkle_root in metadata)");
+    msg!("Token ID: {}, Order ID: {}", token_id, order_id);
 
     emit!(AirdropEvent {
-        rns_id: rns_id.clone(),
+        order_id: order_id.clone(),
+        token_id,
         wallet,
         mint: ctx.accounts.non_transferable_nft_mint.key(),
+        merkle_root: merkle_root.clone(),
     });
-
-    msg!(
-        "RNSNewID:_rnsId:{};_wallet:{};_tokenId:{}",
-        rns_id,
-        wallet,
-        ctx.accounts.non_transferable_nft_mint.key()
-    );
 
     Ok(())
 }
