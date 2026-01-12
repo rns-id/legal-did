@@ -1,15 +1,15 @@
 [toolchain]
-anchor_version = "0.31.1"
+anchor_version = "0.30.1"
 
 [features]
 skip-lint = false
 
 [programs.mainnet]
-legaldid = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
+# legaldid = "将在部署时生成"
 legal_attestation = "4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW"
 
 [programs.devnet]
-legaldid = "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
+legaldid = "BdpQjvCSSQ3UKxuPU75DAHhCvZXharVhu39TxVL1EvtJ"
 legal_attestation = "4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW"
 
 [programs.testnet]

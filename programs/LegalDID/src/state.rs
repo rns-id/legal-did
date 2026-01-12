@@ -118,6 +118,18 @@ pub struct ManageOperator<'info> {
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
 }
 
+/// Transfer authority (current admin only)
+#[derive(Accounts)]
+pub struct TransferAuthority<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(
+        mut,
+        constraint = non_transferable_project.authority == authority.key() @ crate::error::ErrorCode::Unauthorized
+    )]
+    pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
+}
+
 /// Admin or Operator can perform this action
 #[derive(Accounts)]
 pub struct AdminOrOperatorAction<'info> {

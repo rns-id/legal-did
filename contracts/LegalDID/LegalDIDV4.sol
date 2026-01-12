@@ -58,7 +58,8 @@ contract LegalDIDV4 is
     mapping(address => string) public walletToRnsId;
 
     // Reserved storage gap for future upgrades
-    uint256[49] private __gap;
+    // 13 variables + 37 gap = 50 slots (OpenZeppelin convention)
+    uint256[37] private __gap;
 
     function initialize() public initializer {
         __ERC721_init("Legal DID Test", "LDIDTest");
@@ -219,16 +220,15 @@ contract LegalDIDV4 is
     }
 
     function burn(uint256 _tokenId) public override(ERC721BurnableUpgradeable) {
-        super.burn(_tokenId);
         address wallet = tokenIdToWallet[_tokenId];
+        
+        super.burn(_tokenId);
 
-        // V4: Only emit event, no state cleanup needed
+        // V4: Only emit event, no state cleanup needed since mappings won't be accessed
         emit BurnV4(wallet, _tokenId);
-
-        tokenIdToMerkle[_tokenId] = bytes32(0);
+        
+        // Optional: Clear wallet mapping to free storage (saves gas for future operations)
         tokenIdToWallet[_tokenId] = address(0);
-        // V4: tokenIdToRnsId not used, but clear for consistency
-        tokenIdToRnsId[_tokenId] = "";
     }
 
     function _beforeTokenTransfer(

@@ -11,13 +11,13 @@ const {
   SystemProgram,
 } = web3;
 
-// Config - updated to new program ID
+// Config - updated to current program ID
 const PROGRAM_ID = new PublicKey(
   "Ce84NtGdKYpxkFpvWn7a5qqBXzkBfEhXM7gg49NtGuhM"
 );
 const RPC_URL = "https://api.devnet.solana.com";
 
-// PDA calculation functions (v5 version - with Collection + Metadata)
+// PDA calculation functions
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
     [Buffer.from("nt-proj-v5")],
@@ -36,7 +36,7 @@ function getProjectMintAddress(): web3.PublicKey {
 
 async function main() {
   console.log("========================================");
-  console.log("RNS DID Devnet Init Script (Token-2022 v5 + Collection + Metadata)");
+  console.log("Legal DID Devnet Init Script");
   console.log("========================================\n");
 
   // Load wallet
@@ -71,20 +71,6 @@ async function main() {
   const projectInfo = await connection.getAccountInfo(nonTransferableProject);
   if (projectInfo) {
     console.log("✅ Project already initialized!");
-
-    // Display project info
-    try {
-      const projectData = await (program.account as any).projectAccount.fetch(
-        nonTransferableProject
-      );
-      console.log("\nProject Info:");
-      console.log("  Name:", projectData.name);
-      console.log("  Symbol:", projectData.symbol);
-      console.log("  Base URI:", projectData.baseUri);
-      console.log("  Authority:", projectData.authority.toBase58());
-    } catch (e) {
-      console.log("Unable to read project data");
-    }
     return;
   }
 

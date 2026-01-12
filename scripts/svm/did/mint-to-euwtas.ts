@@ -15,16 +15,16 @@ const {
   SystemProgram,
 } = web3;
 
-const PROGRAM_ID = new PublicKey("JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc");
+const PROGRAM_ID = new PublicKey("Ce84NtGdKYpxkFpvWn7a5qqBXzkBfEhXM7gg49NtGuhM");
 const RPC_URL = "https://api.devnet.solana.com";
 
 // New mint target address
 const MINT_TO_ADDRESS = new PublicKey("EuWtasWBcuESn5Mt1R5a4AVja2xsHtFMLs8YWiMfJX8A");
 
 // New DID parameters
-const rnsId = "did-for-euwtas-003";
+const rnsId = "did-for-euwtas-" + Date.now();
 const tokenIndex = "idx-euwtas-" + Date.now();
-const merkleRoot = "082d9a09-aa3c-49dc-ae66-e8800261a2ab";
+const merkleRoot = "0x764e6372e05f4db05595276214e74f047a6562f19bf6cc3bb35a53ac892c3ce3";
 
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
@@ -69,7 +69,7 @@ async function main() {
   const wallet = new Wallet(adminWallet);
   const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
 
-  const idlPath = "./target/idl/rnsdid_core.json";
+  const idlPath = "./target/idl/legaldid.json";
   const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
   const program = new Program(idl, provider);
 
@@ -92,7 +92,7 @@ async function main() {
   const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 });
 
   const tx = await program.methods
-    .airdrop(rnsId, MINT_TO_ADDRESS, merkleRoot, tokenIndex)
+    .airdrop(rnsId, MINT_TO_ADDRESS, merkleRoot)
     .accounts({
       authority: adminWallet.publicKey,
       nonTransferableProject: nonTransferableProject,

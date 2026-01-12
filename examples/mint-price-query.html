@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Mint Price Query</title>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Solana Legal DID Mint Price Query</h1>
+        <p>Click the button to get the current mint price from the Solana program.</p>
+        
+        <button id="queryBtn" onclick="queryMintPrice()">
+            Get Current Mint Price
+        </button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // 配置
+        const PROGRAM_ID = new solanaWeb3.PublicKey("JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc");
+        const RPC_URL = "https://api.devnet.solana.com";
+        
+        // 计算项目账户地址
+        function getProjectAccountAddress() {
+            const [pda] = solanaWeb3.PublicKey.findProgramAddressSync(
+                [Buffer.from("nt-proj-v5")],
+                PROGRAM_ID
+            );
+            return pda;
+        }
+        
+        // 查询 mint price
+        async function queryMintPrice() {
+            const button = document.getElementById('queryBtn');
+            const resultDiv = document.getElementById('result');
+            
+            // 显示加载状态
+            button.disabled = true;
+            button.textContent = 'Querying...';
+            resultDiv.innerHTML = '<div class="result loading">Querying mint price...</div>';
+            
+            try {
+                const connection = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+                const projectAccount = getProjectAccountAddress();
+                
+                console.log('Project Account:', projectAccount.toString());
+                
+                // 获取账户信息
+                const accountInfo = await connection.getAccountInfo(projectAccount);
+                
+                if (!accountInfo) {
+                    throw new Error("Project account not found - program may not be initialized");
+                }
+                
+                // 解析 mint_price
+                const data = accountInfo.data;
+                const offset = 8 + 32; // discriminator(8) + authority(32)
+                
+                // 读取 u64 (8 bytes) little-endian
+                const mintPriceLamports = Number(
+                    data.readBigUInt64LE(offset)
+                );
+                
+                const mintPriceSOL = mintPriceLamports / 1_000_000_000;
+                
+                // 显示结果
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        <h3>✅ Query Successful</h3>
+                        <p><strong>Mint Price: ${mintPriceSOL.toFixed(4)} SOL</strong></p>
+                        <p><small>${mintPriceLamports.toLocaleString()} lamports</small></p>
+                        <p><small>Account: ${projectAccount.toString()}</small></p>
+                        <p><small>Updated: ${new Date().toLocaleTimeString()}</small></p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Query failed:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Query Failed</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><small>Please check the console for more details.</small></p>
+                    </div>
+                `;
+            } finally {
+                // 恢复按钮状态
+                button.disabled = false;
+                button.textContent = 'Get Current Mint Price';
+            }
+        }
+        
+        // 页面加载完成后自动查询一次
+        window.addEventListener('load', () => {
+            console.log('Page loaded, ready to query mint price');
+            console.log('Program ID:', PROGRAM_ID.toString());
+            console.log('RPC URL:', RPC_URL);
+        });
+    </script>
+</body>
+</html>

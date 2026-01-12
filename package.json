@@ -51,7 +51,7 @@
     "svm:update-base-uri": "ts-node scripts/svm/update-base-uri.ts"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "0.31.1",
+    "@coral-xyz/anchor": "0.30.1",
     "@coral-xyz/borsh": "^0.2.6",
     "@dankelleher/solana-attestation-service-client": "^0.1.0",
     "@ethereum-attestation-service/eas-contracts": "^1.8.0",

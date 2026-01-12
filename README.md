@@ -28,7 +28,15 @@ A comprehensive decentralized identity and attestation system supporting both So
 | Testnet | `3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6` | `4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW` |
 
 ### Ethereum Networks
-*Deployment addresses will be updated after mainnet deployment*
+
+| Network | LegalDIDV4 Proxy | LegalDIDV4 Implementation |
+|---------|------------------|---------------------------|
+| Sepolia | `0x8E8e446C0633EDdD7f83F2778249f787134053f8` | `0xcC7Aa59ae9C17753035A586e0c4Eb4939a48D411` |
+| Mainnet | *TBD* | *TBD* |
+
+**Sepolia Testnet Links:**
+- [Proxy Contract](https://sepolia.etherscan.io/address/0x8E8e446C0633EDdD7f83F2778249f787134053f8)
+- [Implementation Contract](https://sepolia.etherscan.io/address/0xcC7Aa59ae9C17753035A586e0c4Eb4939a48D411#code)
 
 ## 📁 Project Structure
 

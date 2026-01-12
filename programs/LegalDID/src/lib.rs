@@ -8,7 +8,8 @@ pub mod utils;
 use instructions::*;
 use state::*;
 
-declare_id!("JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc");
+// Current devnet program ID - will be replaced with new mainnet ID during deployment
+declare_id!("Ce84NtGdKYpxkFpvWn7a5qqBXzkBfEhXM7gg49NtGuhM");
 
 #[program]
 pub mod legaldid {
@@ -108,6 +109,16 @@ pub mod legaldid {
     /// Withdraw accumulated fees to fee_recipient (admin only)
     pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
         withdraw::handler(ctx)
+    }
+
+    /// Transfer authority to new admin (current admin only)
+    pub fn transfer_authority(ctx: Context<TransferAuthority>, new_authority: Pubkey) -> Result<()> {
+        let project = &mut ctx.accounts.non_transferable_project;
+        let old_authority = project.authority;
+        project.authority = new_authority;
+        
+        msg!("Authority transferred from {} to {}", old_authority, new_authority);
+        Ok(())
     }
 
 }
