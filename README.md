@@ -2,6 +2,26 @@
 
 A comprehensive decentralized identity and attestation system supporting both Solana (SVM) and Ethereum (EVM) blockchains. The protocol provides legal identity verification, tagged attestations, and soulbound NFT capabilities.
 
+## 🎉 Devnet Status (2025-01-15)
+
+**✅ DEVNET IS READY FOR TESTING AND INTEGRATION**
+
+- ✅ Contracts deployed with V4 event naming
+- ✅ All scripts tested and working
+- ✅ Token ID auto-increment verified
+- ✅ Multi-network support enabled
+- ✅ IDL browser validation fixed ⭐
+- ✅ Documentation complete
+- ✅ Mainnet deployment SOP ready ⭐
+
+👉 **[View Devnet Status](./DEVNET_READY_2025-01-15.md)** for quick start guide and integration examples.
+
+👉 **[Mainnet Deployment SOP](./MAINNET_DEPLOYMENT_SOP.md)** for complete mainnet deployment standard operating procedure.
+
+👉 **[Upload IDL Guide](./HOW_TO_UPLOAD_IDL.md)** for uploading IDL to Solana Explorer and other tools.
+
+---
+
 ## 🌟 Features
 
 ### Solana (SVM) Implementation
@@ -10,12 +30,32 @@ A comprehensive decentralized identity and attestation system supporting both So
 - **PermanentDelegate**: Permanent delegation for admin revoke/burn operations
 - **MetadataPointer**: On-chain metadata pointer to external JSON
 - **Legal Attestation**: SAS-based attestation system for legal credentials
+- **Multi-Network Support**: Unified scripts support devnet, mainnet, and localnet ⭐
+- **Event Naming V4**: Consistent event naming with EVM V4 (AuthorizeMintV4, AirdropV4, etc.) ⭐
 
 ### Ethereum (EVM) Implementation
 - **EAS Integration**: Ethereum Attestation Service based tagged attestation system
 - **Upgradeable Contracts**: OpenZeppelin proxy pattern for contract upgrades
 - **Multi-Network Support**: Ethereum, Polygon, Arbitrum, Optimism, Base
 - **Role-Based Access Control**: Granular permission management
+
+## 🎯 Recent Updates (2025-01-15)
+
+### ✅ Completed
+1. **Event Names Unified**: Updated Solana events to match EVM V4 naming convention
+2. **Scripts Refactored**: All 10 core scripts now support multi-network (devnet/mainnet/localnet)
+3. **Unified Configuration**: Created `scripts/config.ts` for centralized network management
+4. **Documentation Enhanced**: Complete deployment guides and quick reference cards
+5. **Scripts Cleaned**: Removed 40+ duplicate/outdated scripts, consolidated to 15 core TypeScript scripts
+
+### 📚 New Documentation
+- [Quick Reference](QUICK_REFERENCE.md) - Fast command reference
+- [Mainnet Deployment SOP](MAINNET_DEPLOYMENT_SOP.md) - ⭐ Complete standard operating procedure
+- [Mainnet Deployment Executive Summary](MAINNET_DEPLOYMENT_EXECUTIVE_SUMMARY.md) - One-page summary
+- [Mainnet Deployment Steps](MAINNET_DEPLOYMENT_STEPS.md) - Detailed deployment guide
+- [Authority Handover Guide](AUTHORITY_HANDOVER_GUIDE.md) - Permission transfer guide
+- [All Scripts Network Support](ALL_SCRIPTS_NETWORK_SUPPORT_COMPLETE.md) - Network support details
+- [Final Summary](FINAL_SUMMARY.md) - Project completion summary
 
 ## 🚀 Deployments
 
@@ -24,7 +64,7 @@ A comprehensive decentralized identity and attestation system supporting both So
 | Network | Legal DID Program | Legal Attestation Program |
 |---------|-------------------|---------------------------|
 | Mainnet | `3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6` | `4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW` |
-| Devnet | `JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc` | `4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW` |
+| Devnet | `Ce84NtGdKYpxkFpvWn7a5qqBXzkBfEhXM7gg49NtGuhM` | `4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW` |
 | Testnet | `3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6` | `4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW` |
 
 ### Ethereum Networks
@@ -99,12 +139,17 @@ yarn install
 # Build Solana programs
 yarn svm:build
 
+# Build and fix IDL for browser compatibility
+./build-and-fix-idl.sh
+
 # Test Solana programs
 yarn svm:test
 
 # Deploy to Devnet
 yarn svm:deploy:devnet
 ```
+
+**Note**: After building, the IDL file at `target/idl/legaldid.json` is automatically fixed for browser compatibility. See [IDL Fix Guide](./IDL_FIX_2025-01-15.md) for details.
 
 ### Ethereum Development
 

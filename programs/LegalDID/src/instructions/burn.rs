@@ -6,7 +6,7 @@ use anchor_spl::token_interface::TokenInterface;
 use crate::state::*;
 
 #[event]
-pub struct BurnEvent {
+pub struct BurnV4 {
     pub wallet: Pubkey,
     pub mint: Pubkey,
 }
@@ -130,7 +130,7 @@ pub fn handler(ctx: Context<BurnNonTransferableNft>) -> Result<()> {
 
     msg!("Mint account closed, rent recovered");
 
-    emit!(BurnEvent {
+    emit!(BurnV4 {
         wallet: ctx.accounts.nft_owner.key(),
         mint: ctx.accounts.non_transferable_nft_mint.key(),
     });

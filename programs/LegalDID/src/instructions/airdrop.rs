@@ -13,9 +13,8 @@ use spl_token_metadata_interface::state::TokenMetadata;
 use crate::state::*;
 
 #[event]
-pub struct AirdropEvent {
-    pub order_id: String,       // Business tracking (like EVM orderId)
-    pub token_id: u64,          // Auto-increment ID (like EVM tokenId)
+pub struct AirdropV4 {
+    pub order_id: String,       // Business tracking and PDA seed
     pub wallet: Pubkey,
     pub mint: Pubkey,
     pub merkle_root: String,
@@ -36,8 +35,7 @@ pub struct MintNonTransferableNft<'info> {
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
 
     /// CHECK: Token-2022 NFT Mint account, requires manual extension initialization
-    /// Uses token_id (auto-increment) as PDA seed, like EVM tokenId
-    /// The actual token_id is computed as last_token_id + 1 in handler
+    /// Uses order_id as PDA seed
     #[account(mut)]
     pub non_transferable_nft_mint: UncheckedAccount<'info>,
 
@@ -71,20 +69,16 @@ pub fn handler(
 ) -> Result<()> {
     let project = &mut ctx.accounts.non_transferable_project;
     
-    // Auto-increment token_id (like EVM lastTokenId++)
-    let token_id = project.last_token_id + 1;
-    project.last_token_id = token_id;
-    
     let project_bump = project.bump;
     let project_signer_seeds: &[&[u8]] = &[
         NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes(),
         &[project_bump],
     ];
 
-    // Use token_id as PDA seed (like EVM tokenId)
-    let token_id_bytes = token_id.to_le_bytes();
+    // Use order_id hash as PDA seed (to support long order IDs like UUIDs)
+    let order_id_hash = crate::state::hash_seed(&order_id);
     let (expected_mint, mint_bump) = Pubkey::find_program_address(
-        &[NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(), &token_id_bytes],
+        &[NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(), &order_id_hash],
         ctx.program_id,
     );
     
@@ -96,7 +90,7 @@ pub fn handler(
     
     let mint_signer_seeds: &[&[u8]] = &[
         NON_TRANSFERABLE_NFT_MINT_PREFIX.as_bytes(),
-        &token_id_bytes,
+        &order_id_hash,
         &[mint_bump],
     ];
 
@@ -104,7 +98,7 @@ pub fn handler(
 
     // Metadata info - merkle_root as part of URI
     let metadata_uri = format!("{}{}.json", project.base_uri, merkle_root);
-    let name = format!("LDID #{}", token_id);  // Use token_id in name
+    let name = format!("LDID #{}", order_id);  // Use order_id in name
     let symbol = project.symbol.clone();
 
     // 1. Create Token-2022 NFT Mint (if not exists)
@@ -323,11 +317,10 @@ pub fn handler(
     )?;
 
     msg!("NFT minted successfully (NonTransferable, merkle_root in metadata)");
-    msg!("Token ID: {}, Order ID: {}", token_id, order_id);
+    msg!("Order ID: {}", order_id);
 
-    emit!(AirdropEvent {
+    emit!(AirdropV4 {
         order_id: order_id.clone(),
-        token_id,
         wallet,
         mint: ctx.accounts.non_transferable_nft_mint.key(),
         merkle_root: merkle_root.clone(),

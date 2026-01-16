@@ -9,7 +9,7 @@ use instructions::*;
 use state::*;
 
 // Current devnet program ID - will be replaced with new mainnet ID during deployment
-declare_id!("Ce84NtGdKYpxkFpvWn7a5qqBXzkBfEhXM7gg49NtGuhM");
+declare_id!("BE6yuzEjzapwBEQ9RoAFzG72XZzb17JuWWqhecFHdEQa");
 
 #[program]
 pub mod legaldid {

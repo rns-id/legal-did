@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::state::*;
 
 #[event]
-pub struct WithdrawEvent {
+pub struct WithdrawV4 {
     pub recipient: Pubkey,
     pub amount: u64,
 }
@@ -52,7 +52,7 @@ pub fn handler(ctx: Context<Withdraw>) -> Result<()> {
 
     msg!("Withdrawn {} lamports to {}", withdrawable, ctx.accounts.destination.key());
 
-    emit!(WithdrawEvent {
+    emit!(WithdrawV4 {
         recipient: ctx.accounts.destination.key(),
         amount: withdrawable,
     });

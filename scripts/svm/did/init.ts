@@ -1,6 +1,7 @@
 import { Program, AnchorProvider, Wallet, web3 } from "@coral-xyz/anchor";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import * as fs from "fs";
+import { getNetworkConfig, getExplorerLink } from "../../config";
 
 const {
   Connection,
@@ -11,11 +12,12 @@ const {
   SystemProgram,
 } = web3;
 
-// Config - updated to new program ID
-const PROGRAM_ID = new PublicKey(
-  "Ce84NtGdKYpxkFpvWn7a5qqBXzkBfEhXM7gg49NtGuhM"
-);
-const RPC_URL = "https://api.devnet.solana.com";
+// Get network from command line args (default: devnet)
+const network = process.argv[2] || "devnet";
+const config = getNetworkConfig(network);
+
+const PROGRAM_ID = new PublicKey(config.programId);
+const RPC_URL = config.rpcUrl;
 
 // PDA calculation functions (v5 version - with Collection + Metadata)
 function findNonTransferableProject(): web3.PublicKey {
@@ -36,7 +38,7 @@ function getProjectMintAddress(): web3.PublicKey {
 
 async function main() {
   console.log("========================================");
-  console.log("RNS DID Devnet Init Script (Token-2022 v5 + Collection + Metadata)");
+  console.log(`RNS DID Init Script (Token-2022 v5 + Collection + Metadata) - ${network.toUpperCase()}`);
   console.log("========================================\n");
 
   // Load wallet
@@ -44,6 +46,9 @@ async function main() {
   const secretKey = JSON.parse(fs.readFileSync(walletPath, "utf-8"));
   const adminWallet = Keypair.fromSecretKey(new Uint8Array(secretKey));
 
+  console.log("Network:", network);
+  console.log("RPC URL:", RPC_URL);
+  console.log("Program ID:", PROGRAM_ID.toBase58());
   console.log("Admin Wallet:", adminWallet.publicKey.toBase58());
 
   // Connect
@@ -117,9 +122,7 @@ async function main() {
 
     console.log("\n✅ Initialization successful!");
     console.log("Transaction signature:", tx);
-    console.log(
-      `\nView transaction: https://explorer.solana.com/tx/${tx}?cluster=devnet`
-    );
+    console.log(`\nView transaction: ${getExplorerLink(tx, network, 'tx')}`);
   } catch (error) {
     console.error("\n❌ Initialization failed:", error);
     throw error;
