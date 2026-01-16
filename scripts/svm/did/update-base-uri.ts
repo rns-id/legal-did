@@ -23,7 +23,7 @@ const RPC_URL = config.rpcUrl;
 
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v4")],
+    [Buffer.from("nt-proj-v5")],
     PROGRAM_ID
   );
   return pda;
@@ -49,7 +49,7 @@ async function main() {
   const nonTransferableProject = findNonTransferableProject();
 
   // New base URI
-  const newBaseUri = "https://api.rns.id/api/v2/portal/identity/nft/";
+  const newBaseUri = "https://dev-api-1.rns.id/api/v2/portal/identity/nft/";
 
   console.log("Network:", network);
   console.log("RPC URL:", RPC_URL);
