@@ -129,6 +129,13 @@ pub fn handler(ctx: Context<BurnNonTransferableNft>) -> Result<()> {
     )?;
 
     msg!("Mint account closed, rent recovered");
+    
+    // 输出格式化的事件日志，方便后端解析
+    msg!(
+        "BurnV4:wallet:{};mint:{};",
+        ctx.accounts.nft_owner.key(),
+        ctx.accounts.non_transferable_nft_mint.key()
+    );
 
     emit!(BurnV4 {
         wallet: ctx.accounts.nft_owner.key(),

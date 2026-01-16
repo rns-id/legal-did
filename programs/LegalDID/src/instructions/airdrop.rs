@@ -318,6 +318,15 @@ pub fn handler(
 
     msg!("NFT minted successfully (NonTransferable, merkle_root in metadata)");
     msg!("Order ID: {}", order_id);
+    
+    // 输出格式化的事件日志，方便后端解析
+    msg!(
+        "AirdropV4:orderId:{};wallet:{};mint:{};merkleRoot:{};",
+        order_id,
+        wallet,
+        ctx.accounts.non_transferable_nft_mint.key(),
+        merkle_root
+    );
 
     emit!(AirdropV4 {
         order_id: order_id.clone(),

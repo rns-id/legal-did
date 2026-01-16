@@ -56,6 +56,15 @@ pub fn handler(
     msg!("Order ID: {}", order_id);
     msg!("Payer: {}", ctx.accounts.payer.key());
     msg!("Amount: {} lamports", mint_price);
+    
+    // 输出格式化的事件日志，方便后端解析
+    msg!(
+        "AuthorizeMintV4:orderId:{};wallet:{};payer:{};amount:{};",
+        order_id,
+        ctx.accounts.payer.key(),
+        ctx.accounts.payer.key(),
+        mint_price
+    );
 
     emit!(AuthorizeMintV4 {
         order_id: order_id.clone(),
