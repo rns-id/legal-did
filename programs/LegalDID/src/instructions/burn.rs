@@ -6,7 +6,7 @@ use anchor_spl::token_interface::TokenInterface;
 use crate::state::*;
 
 #[event]
-pub struct BurnEvent {
+pub struct BurnV4 {
     pub wallet: Pubkey,
     pub mint: Pubkey,
 }
@@ -16,9 +16,12 @@ pub struct BurnNonTransferableNft<'info> {
     #[account(mut)]
     pub nft_owner: Signer<'info>,
 
-    /// CHECK: Admin account to receive Mint rent
-    #[account(mut)]
-    pub authority: UncheckedAccount<'info>,
+    /// Authority account to receive Mint rent - must be project authority
+    #[account(
+        mut,
+        constraint = authority.key() == non_transferable_project.authority @ crate::error::ErrorCode::Unauthorized
+    )]
+    pub authority: SystemAccount<'info>,
 
     #[account(
         mut,
@@ -129,8 +132,15 @@ pub fn handler(ctx: Context<BurnNonTransferableNft>) -> Result<()> {
     )?;
 
     msg!("Mint account closed, rent recovered");
+    
+    // 输出格式化的事件日志，方便后端解析
+    msg!(
+        "BurnV4:wallet:{};mint:{};",
+        ctx.accounts.nft_owner.key(),
+        ctx.accounts.non_transferable_nft_mint.key()
+    );
 
-    emit!(BurnEvent {
+    emit!(BurnV4 {
         wallet: ctx.accounts.nft_owner.key(),
         mint: ctx.accounts.non_transferable_nft_mint.key(),
     });

@@ -5,6 +5,10 @@
  * Rent recovery:
  *   - ATA rent (~0.0021 SOL) → User
  *   - Mint rent (~0.0049 SOL) → Admin
+ * 
+ * Usage:
+ *   ts-node user-burn.ts [network]
+ *   network: devnet (default) | mainnet | localnet
  */
 
 import { Program, AnchorProvider, Wallet, web3 } from "@coral-xyz/anchor";
@@ -16,14 +20,19 @@ import {
 import * as fs from "fs";
 import bs58 from "bs58";
 import * as dotenv from "dotenv";
+import { getNetworkConfig, getExplorerLink } from "../../config";
 
 // Load environment variables
 dotenv.config();
 
 const { Connection, PublicKey, Keypair, ComputeBudgetProgram, SystemProgram } = web3;
 
-const PROGRAM_ID = new PublicKey("JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc");
-const RPC_URL = "https://api.devnet.solana.com";
+// Get network from command line args (default: devnet)
+const network = process.argv[2] || "devnet";
+const config = getNetworkConfig(network);
+
+const PROGRAM_ID = new PublicKey(config.programId);
+const RPC_URL = config.rpcUrl;
 
 // ========== CONFIG ==========
 // User private key (base58 format) - load from environment
@@ -31,9 +40,8 @@ const USER_PRIVATE_KEY = process.env.USER_PRIVATE_KEY || (() => {
   throw new Error("Please set USER_PRIVATE_KEY environment variable");
 })();
 
-// NFT info to burn (v4 version)
-const rnsId = "082d9a09-aa3c-49dc-ae66-e8800261a2ab";
-const tokenIndex = "idx-1765969033095"; // minted in v4
+// NFT info to burn (v5 version)
+const orderId = "test-order-001"; // Use the order_id that was used during minting
 
 // Admin address (receives Mint rent)
 const ADMIN_ADDRESS = new PublicKey("2fuikT5C2YVctakxoBNQ23NjXzA4kY2cn36Sh6ws3pAt");
@@ -41,15 +49,15 @@ const ADMIN_ADDRESS = new PublicKey("2fuikT5C2YVctakxoBNQ23NjXzA4kY2cn36Sh6ws3pA
 
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-proj-v4")],
+    [Buffer.from("nt-proj-v5")],
     PROGRAM_ID
   );
   return pda;
 }
 
-function getNftMintAddress(index: string): web3.PublicKey {
+function getNftMintAddress(orderId: string): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-nft-mint-v4"), Buffer.from(index)],
+    [Buffer.from("nt-nft-mint-v5"), Buffer.from(orderId)],
     PROGRAM_ID
   );
   return pda;
@@ -57,7 +65,7 @@ function getNftMintAddress(index: string): web3.PublicKey {
 
 async function main() {
   console.log("========================================");
-  console.log("User Burn DID NFT");
+  console.log(`User Burn DID NFT - ${network.toUpperCase()}`);
   console.log("========================================\n");
 
   // Load user wallet
@@ -67,12 +75,12 @@ async function main() {
   const wallet = new Wallet(userWallet);
   const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
 
-  const idlPath = "./target/idl/rnsdid_core.json";
+  const idlPath = "./target/idl/legaldid.json";
   const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
   const program = new Program(idl, provider);
 
   const nonTransferableProject = findNonTransferableProject();
-  const nonTransferableNftMint = getNftMintAddress(tokenIndex);
+  const nonTransferableNftMint = getNftMintAddress(orderId);
   const userTokenAccount = getAssociatedTokenAddressSync(
     nonTransferableNftMint,
     userWallet.publicKey,
@@ -80,9 +88,12 @@ async function main() {
     TOKEN_2022_PROGRAM_ID
   );
 
+  console.log("Network:", network);
+  console.log("RPC URL:", RPC_URL);
+  console.log("Program ID:", PROGRAM_ID.toBase58());
   console.log("User:", userWallet.publicKey.toBase58());
   console.log("Admin:", ADMIN_ADDRESS.toBase58());
-  console.log("RNS ID:", rnsId);
+  console.log("Order ID:", orderId);
   console.log("NFT Mint:", nonTransferableNftMint.toBase58());
   console.log("User ATA:", userTokenAccount.toBase58());
 
@@ -104,7 +115,7 @@ async function main() {
     });
 
     const tx = await program.methods
-      .burn(rnsId, tokenIndex)
+      .burn()
       .accounts({
         nftOwner: userWallet.publicKey,
         authority: ADMIN_ADDRESS,
@@ -129,7 +140,7 @@ async function main() {
     console.log("Transaction signature:", tx);
     console.log(`\n💰 User recovered (ATA rent - tx fee): ${userRecovered.toFixed(8)} SOL`);
     console.log(`💰 Admin recovered (Mint rent): ${adminRecovered.toFixed(8)} SOL`);
-    console.log(`\nView transaction: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
+    console.log(`\nView transaction: ${getExplorerLink(tx, network, 'tx')}`);
   } catch (error: any) {
     console.error("\n❌ Burn failed:", error.message);
   }

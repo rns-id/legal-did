@@ -201,12 +201,15 @@ contract LegalDIDV4 is
     }
 
     function setFundDestination(address _destination) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_destination != address(0), "INVALID_DESTINATION");
         destination = _destination;
     }
 
     function withdraw() public onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 balance = address(this).balance;
-        payable(destination).transfer(balance);
+        require(balance > 0, "NO_BALANCE");
+        (bool success, ) = payable(destination).call{value: balance}("");
+        require(success, "ETH_TRANSFER_FAILED");
         emit WithdrawV4(destination, balance);
     }
 
@@ -224,11 +227,12 @@ contract LegalDIDV4 is
         
         super.burn(_tokenId);
 
-        // V4: Only emit event, no state cleanup needed since mappings won't be accessed
+        // V4: Emit event for backend tracking
         emit BurnV4(wallet, _tokenId);
         
-        // Optional: Clear wallet mapping to free storage (saves gas for future operations)
+        // Clear mappings to free storage (saves gas for future operations)
         tokenIdToWallet[_tokenId] = address(0);
+        tokenIdToMerkle[_tokenId] = bytes32(0);
     }
 
     function _beforeTokenTransfer(

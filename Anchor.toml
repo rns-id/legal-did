@@ -1,15 +1,16 @@
 [toolchain]
-anchor_version = "0.30.1"
+anchor_version = "0.31.1"
 
 [features]
 skip-lint = false
 
 [programs.mainnet]
-# legaldid = "将在部署时生成"
+# legaldid = "将在主网部署时生成"
+legaldid = "BE6yuzEjzapwBEQ9RoAFzG72XZzb17JuWWqhecFHdEQa"
 legal_attestation = "4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW"
 
 [programs.devnet]
-legaldid = "BdpQjvCSSQ3UKxuPU75DAHhCvZXharVhu39TxVL1EvtJ"
+legaldid = "BE6yuzEjzapwBEQ9RoAFzG72XZzb17JuWWqhecFHdEQa"
 legal_attestation = "4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW"
 
 [programs.testnet]
@@ -17,7 +18,7 @@ legaldid = "3WaA2C9VRHczjqcdVgWw8Ug2VfoCVbCzEp9bwPPG6Qj6"
 legal_attestation = "4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW"
 
 [programs.localnet]
-legaldid = "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
+legaldid = "BE6yuzEjzapwBEQ9RoAFzG72XZzb17JuWWqhecFHdEQa"
 legal_attestation = "4L4PvfugSGXuosyZSQxGxL5B9WqhUVqMEfwqMEUdUGiW"
 
 [registry]

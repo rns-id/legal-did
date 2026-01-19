@@ -13,7 +13,7 @@ const {
 
 // Config - updated to current program ID
 const PROGRAM_ID = new PublicKey(
-  "Ce84NtGdKYpxkFpvWn7a5qqBXzkBfEhXM7gg49NtGuhM"
+  "BE6yuzEjzapwBEQ9RoAFzG72XZzb17JuWWqhecFHdEQa"
 );
 const RPC_URL = "https://api.devnet.solana.com";
 

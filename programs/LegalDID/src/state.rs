@@ -18,7 +18,6 @@ pub const NON_TRANSFERABLE_PROJECT_SIZE: usize = 8 +   // discriminator
     32 +    // destination (renamed from fee_recipient)
     1 +     // bump
     1 +     // mint_bump
-    8 +     // last_token_id (like EVM lastTokenId)
     100 +   // name
     100 +   // symbol
     200 +   // base_uri
@@ -49,7 +48,6 @@ pub struct ProjectAccount {
     pub destination: Pubkey,    // Fee destination (renamed from fee_recipient)
     pub bump: u8,
     pub mint_bump: u8,
-    pub last_token_id: u64,     // Auto-increment token ID (like EVM lastTokenId)
     pub name: String,
     pub symbol: String,
     pub base_uri: String,

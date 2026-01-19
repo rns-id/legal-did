@@ -1,0 +1,6 @@
+# Solana Python SDK
+solders>=0.18.0
+solana>=0.30.0
+
+# Utilities
+base58>=2.1.0

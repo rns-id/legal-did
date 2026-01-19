@@ -5,6 +5,7 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import * as fs from "fs";
+import { getNetworkConfig, getExplorerLink } from "../../config";
 
 const {
   Connection,
@@ -15,23 +16,24 @@ const {
   SystemProgram,
 } = web3;
 
-// Config - updated to new program ID
-const PROGRAM_ID = new PublicKey(
-  "JCo8dShYwHu74UpBTmwUcoEcGgWZQWnoTCvFaqjGJ6fc"
-);
-const RPC_URL = "https://api.devnet.solana.com";
+// Get parameters from command line
+const network = process.argv[2] || "devnet";
+const recipientAddress = process.argv[3];
+const orderId = process.argv[4];
+const merkleRoot = process.argv[5] || "0000000000000000000000000000000000000000000000000000000000000000";
 
-// Mint target address
-const MINT_TO_ADDRESS = new PublicKey(
-  "H2sykMLjWjBCtALDYCwnqxALEWtDbBwfCXtz7YThoEne"
-);
+if (!recipientAddress || !orderId) {
+  console.log("Usage: npx ts-node scripts/svm/did/mint-single.ts <network> <recipient> <orderId> [merkleRoot]");
+  console.log("Example: npx ts-node scripts/svm/did/mint-single.ts devnet 7s3NWENLzKzL18yGfy4rQNYFQPNFhiHnXYSgjptEwhBg d275d072-21e1-48d3-b17c-e0855712b067");
+  process.exit(1);
+}
 
-// Test re-mint after revoke
-const rnsId = "test-revoke-remint";
-const tokenIndex = "idx-revoke-test-001";
-const merkleRoot = "2d852b3c21e923484a93d3a980a45b7571e89552d58875d40dd17c73216a49d7";
+const config = getNetworkConfig(network);
+const PROGRAM_ID = new PublicKey(config.programId);
+const RPC_URL = config.rpcUrl;
+const MINT_TO_ADDRESS = new PublicKey(recipientAddress);
 
-// PDA calculation functions (v5 version - with Collection + Metadata)
+// PDA calculation functions
 function findNonTransferableProject(): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
     [Buffer.from("nt-proj-v5")],
@@ -48,9 +50,9 @@ function findCollectionMint(): web3.PublicKey {
   return pda;
 }
 
-function getNftMintAddress(index: string): web3.PublicKey {
+function getNftMintAddress(orderId: string): web3.PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("nt-nft-mint-v5"), Buffer.from(index)],
+    [Buffer.from("nt-nft-mint-v5"), Buffer.from(orderId)],
     PROGRAM_ID
   );
   return pda;
@@ -58,7 +60,7 @@ function getNftMintAddress(index: string): web3.PublicKey {
 
 async function main() {
   console.log("========================================");
-  console.log("RNS DID Devnet Mint Script (Token-2022 v4 + Collection)");
+  console.log(`Mint DID NFT - ${network.toUpperCase()}`);
   console.log("========================================\n");
 
   // Load wallet
@@ -66,10 +68,12 @@ async function main() {
   const secretKey = JSON.parse(fs.readFileSync(walletPath, "utf-8"));
   const adminWallet = Keypair.fromSecretKey(new Uint8Array(secretKey));
 
+  console.log("Network:", network);
+  console.log("Program ID:", PROGRAM_ID.toBase58());
   console.log("Admin Wallet:", adminWallet.publicKey.toBase58());
-  console.log("Mint Target:", MINT_TO_ADDRESS.toBase58());
-  console.log("RNS ID:", rnsId);
-  console.log("Token Index:", tokenIndex);
+  console.log("Recipient:", MINT_TO_ADDRESS.toBase58());
+  console.log("Order ID:", orderId);
+  console.log("Merkle Root:", merkleRoot);
   console.log("");
 
   // Connect
@@ -80,14 +84,23 @@ async function main() {
   });
 
   // Load IDL
-  const idlPath = "./target/idl/rnsdid_core.json";
+  const idlPath = "./target/idl/legaldid.json";
   const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
   const program = new Program(idl, provider);
 
   // Calculate all PDAs
   const nonTransferableProject = findNonTransferableProject();
   const collectionMint = findCollectionMint();
-  const nonTransferableNftMint = getNftMintAddress(tokenIndex);
+  
+  // Check if project is initialized
+  const projectAccountInfo = await connection.getAccountInfo(nonTransferableProject);
+  if (!projectAccountInfo) {
+    console.log("❌ Project not initialized! Run init.ts first");
+    return;
+  }
+  
+  // NFT Mint PDA is derived from order_id
+  const nonTransferableNftMint = getNftMintAddress(orderId);
   const userTokenAccount = getAssociatedTokenAddressSync(
     nonTransferableNftMint,
     MINT_TO_ADDRESS,
@@ -102,16 +115,18 @@ async function main() {
   console.log("  User Token Account:", userTokenAccount.toBase58());
   console.log("");
 
-  // Check if project is initialized
-  const projectInfo = await connection.getAccountInfo(nonTransferableProject);
-  if (!projectInfo) {
-    console.log("❌ Project not initialized! Run init-devnet.ts first");
+  // Check if NFT already exists
+  const nftMintInfo = await connection.getAccountInfo(nonTransferableNftMint);
+  if (nftMintInfo) {
+    console.log("❌ NFT with this order ID already exists!");
+    console.log(`View existing NFT: ${getExplorerLink(nonTransferableNftMint.toBase58(), network)}`);
     return;
   }
-  console.log("✅ Project initialized\n");
+
+  console.log("✅ Ready to mint\n");
 
   // Execute airdrop
-  console.log("Minting DID NFT (Token-2022 + merkle_root in metadata)...");
+  console.log("Minting DID NFT...");
 
   try {
     const setComputeUnitLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
@@ -119,7 +134,7 @@ async function main() {
     });
 
     const tx = await program.methods
-      .airdrop(rnsId, MINT_TO_ADDRESS, merkleRoot, tokenIndex)
+      .airdrop(orderId, MINT_TO_ADDRESS, merkleRoot)
       .accounts({
         authority: adminWallet.publicKey,
         nonTransferableProject: nonTransferableProject,
@@ -137,16 +152,12 @@ async function main() {
       .rpc();
 
     console.log("\n✅ Mint successful!");
-    console.log("Transaction signature:", tx);
-    console.log(
-      `\nView transaction: https://explorer.solana.com/tx/${tx}?cluster=devnet`
-    );
-    console.log(
-      `View NFT Mint: https://explorer.solana.com/address/${nonTransferableNftMint.toBase58()}?cluster=devnet`
-    );
-    console.log(
-      `View User Token Account: https://explorer.solana.com/address/${userTokenAccount.toBase58()}?cluster=devnet`
-    );
+    console.log("Transaction:", tx);
+    console.log("Order ID:", orderId);
+    console.log("Recipient:", MINT_TO_ADDRESS.toBase58());
+    console.log(`\nView transaction: ${getExplorerLink(tx, network, 'tx')}`);
+    console.log(`View NFT Mint: ${getExplorerLink(nonTransferableNftMint.toBase58(), network)}`);
+    console.log(`View User Token Account: ${getExplorerLink(userTokenAccount.toBase58(), network)}`);
   } catch (error) {
     console.error("\n❌ Mint failed:", error);
     throw error;

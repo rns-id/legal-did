@@ -54,7 +54,6 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
     non_transferable_project.destination = ctx.accounts.authority.key(); // Default to authority
     non_transferable_project.bump = ctx.bumps.non_transferable_project;
     non_transferable_project.mint_bump = ctx.bumps.non_transferable_project_mint;
-    non_transferable_project.last_token_id = 0; // Initialize to 0, first token will be 1
 
     non_transferable_project.name = args.name.clone();
     non_transferable_project.symbol = args.symbol.clone();
