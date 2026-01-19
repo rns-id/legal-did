@@ -16,9 +16,12 @@ pub struct BurnNonTransferableNft<'info> {
     #[account(mut)]
     pub nft_owner: Signer<'info>,
 
-    /// CHECK: Admin account to receive Mint rent
-    #[account(mut)]
-    pub authority: UncheckedAccount<'info>,
+    /// Authority account to receive Mint rent - must be project authority
+    #[account(
+        mut,
+        constraint = authority.key() == non_transferable_project.authority @ crate::error::ErrorCode::Unauthorized
+    )]
+    pub authority: SystemAccount<'info>,
 
     #[account(
         mut,
