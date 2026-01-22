@@ -15,7 +15,7 @@ import {
     LAMPORTS_PER_SOL
 } from '@solana/web3.js';
 import { Program, AnchorProvider, Wallet, BN } from '@coral-xyz/anchor';
-import { Legaldid } from '../target/types/legaldid';
+import { Legaldid } from '../../../target/types/legaldid';
 import * as bs58 from 'bs58';
 import * as dotenv from 'dotenv';
 import { getNetworkConfig, getExplorerLink, NetworkConfig } from '../../config';
@@ -75,7 +75,7 @@ export class MintPriceManager {
         
         if (!idl) {
             // 如果无法从链上获取，使用本地 IDL
-            const localIdl = require('../target/idl/legaldid.json');
+            const localIdl = require('../../../target/idl/legaldid.json');
             this.program = new Program(localIdl as Legaldid, provider);
         } else {
             this.program = new Program(idl as Legaldid, provider);
@@ -302,7 +302,7 @@ async function main(): Promise<void> {
 }
 
 // 导出类和接口
-export { MintPriceManager, NetworkConfig, SetPriceResult };
+export { SetPriceResult };
 
 // 如果直接运行此脚本
 if (require.main === module) {

@@ -16,7 +16,7 @@ import {
     SystemProgram
 } from '@solana/web3.js';
 import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
-import { Legaldid } from '../../target/types/legaldid';
+import { Legaldid } from '../../../target/types/legaldid';
 import * as bs58 from 'bs58';
 import * as dotenv from 'dotenv';
 import * as readline from 'readline';
@@ -126,7 +126,7 @@ async function transferAuthority(
         
         let program: Program<Legaldid>;
         if (!idl) {
-            const localIdl = require('../../target/idl/legaldid.json');
+            const localIdl = require('../../../target/idl/legaldid.json');
             program = new Program(localIdl as Legaldid, provider);
         } else {
             program = new Program(idl as Legaldid, provider);

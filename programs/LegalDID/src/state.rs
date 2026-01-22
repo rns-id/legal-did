@@ -95,12 +95,15 @@ pub struct SetFundDestination<'info> {
 
 
 
-/// Admin only operation
+/// Admin or Operator can set mint price
 #[derive(Accounts)]
 pub struct SetMintPriceContext<'info> {
     #[account()]
     pub authority: Signer<'info>,
-    #[account(mut, has_one = authority)]
+    #[account(
+        mut,
+        constraint = non_transferable_project.is_admin_or_operator(&authority.key()) @ crate::error::ErrorCode::Unauthorized
+    )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
 }
 

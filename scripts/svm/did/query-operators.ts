@@ -216,6 +216,7 @@ async function main(): Promise<void> {
         console.log("  Operators:");
         console.log("    • 执行 DID 空投 (airdrop)");
         console.log("    • 处理用户铸造请求");
+        console.log("    • 设置铸造价格");
         console.log("");
         
         // 浏览器链接
