@@ -14,10 +14,31 @@ import {
 import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
 import { Legaldid } from '../../../target/types/legaldid';
 import * as bs58 from 'bs58';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { getNetworkConfig, getExplorerLink } from '../../config';
 
 dotenv.config();
+
+/**
+ * 获取 Authority 钱包
+ * 优先从 Solana CLI 配置的 keypair 文件读取
+ */
+function getAuthorityWallet(): Keypair {
+    const keypairPath = path.join(process.env.HOME || '', '.config/solana/id.json');
+    if (fs.existsSync(keypairPath)) {
+        const secretKey = JSON.parse(fs.readFileSync(keypairPath, 'utf-8'));
+        return Keypair.fromSecretKey(Uint8Array.from(secretKey));
+    }
+    
+    const authorityPrivateKey = process.env.SOLANA_PRIVATE_KEY;
+    if (!authorityPrivateKey) {
+        throw new Error("SOLANA_PRIVATE_KEY 环境变量未设置，且未找到 ~/.config/solana/id.json");
+    }
+    
+    return Keypair.fromSecretKey(bs58.decode(authorityPrivateKey));
+}
 
 async function setFundDestination(network: string, destinationAddress: string): Promise<void> {
     console.log("=".repeat(60));
@@ -32,12 +53,7 @@ async function setFundDestination(network: string, destinationAddress: string): 
     const config = getNetworkConfig(network);
 
     // 获取 Authority 钱包
-    const authorityPrivateKey = process.env.SOLANA_PRIVATE_KEY;
-    if (!authorityPrivateKey) {
-        throw new Error("SOLANA_PRIVATE_KEY 环境变量未设置");
-    }
-
-    const authority = Keypair.fromSecretKey(bs58.decode(authorityPrivateKey));
+    const authority = getAuthorityWallet();
     console.log(`🔑 Authority: ${authority.publicKey.toString()}`);
 
     // 验证目标地址
@@ -108,7 +124,6 @@ async function setFundDestination(network: string, destinationAddress: string): 
     const tx = await program.methods
         .setFundDestination(destination)
         .accounts({
-            authority: authority.publicKey,
             nonTransferableProject: projectPDA,
         })
         .rpc();

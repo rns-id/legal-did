@@ -14,6 +14,7 @@ import { getNetworkConfig, getExplorerLink, NetworkConfig } from '../../config';
 // 类型定义
 interface ProjectInfo {
     authority: string;
+    destination: string;
     mintPrice: number;
     mintPriceSOL: number;
     name: string;
@@ -102,8 +103,12 @@ export class SolanaPriceQuery {
             const mintPrice = Number(mintPriceBuffer.readBigUInt64LE(0));
             offset += 8;
             
-            // 跳过其他字段
-            offset += 32 + 1 + 1; // destination + bump + mintBump
+            // 读取 destination (32 bytes)
+            const destination = new PublicKey(data.subarray(offset, offset + 32));
+            offset += 32;
+            
+            // 跳过 bump 字段
+            offset += 1 + 1; // bump + mintBump
             
             // 读取字符串 (name)
             const nameLength = data.readUInt32LE(offset);
@@ -124,6 +129,7 @@ export class SolanaPriceQuery {
             
             return {
                 authority: authority.toString(),
+                destination: destination.toString(),
                 mintPrice: mintPrice,
                 mintPriceSOL: mintPrice / LAMPORTS_PER_SOL,
                 name: name,
@@ -237,7 +243,8 @@ async function main(): Promise<void> {
         console.log("📋 项目信息:");
         console.log(`  名称: ${projectInfo.name}`);
         console.log(`  符号: ${projectInfo.symbol}`);
-        console.log(`  管理员: ${projectInfo.authority}`);
+        console.log(`  管理员 (Authority): ${projectInfo.authority}`);
+        console.log(`  资金接收地址 (Destination): ${projectInfo.destination}`);
         console.log(`  基础URI: ${projectInfo.baseUri}`);
         console.log("");
         

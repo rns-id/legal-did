@@ -21,7 +21,7 @@ export const NETWORKS: Record<string, NetworkConfig> = {
   },
   mainnet: {
     rpcUrl: process.env.SOLANA_MAINNET_RPC_URL || "https://api.mainnet-beta.solana.com",
-    programId: "待部署后更新", // TODO: 主网部署后更新此 Program ID
+    programId: "BE6yuzEjzapwBEQ9RoAFzG72XZzb17JuWWqhecFHdEQa",
     explorerUrl: "https://explorer.solana.com"
   },
   // 本地测试网络（可选）
@@ -44,13 +44,6 @@ export function getNetworkConfig(network: string = 'devnet'): NetworkConfig {
   if (!config) {
     throw new Error(
       `不支持的网络: ${network}. 支持的网络: ${Object.keys(NETWORKS).join(', ')}`
-    );
-  }
-  
-  // 验证主网 Program ID 是否已更新
-  if (network === 'mainnet' && config.programId === '待部署后更新') {
-    throw new Error(
-      '主网 Program ID 尚未配置！请先部署到主网并更新 scripts/config.ts 中的 programId'
     );
   }
   

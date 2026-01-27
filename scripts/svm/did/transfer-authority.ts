@@ -18,6 +18,8 @@ import {
 import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
 import { Legaldid } from '../../../target/types/legaldid';
 import * as bs58 from 'bs58';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as dotenv from 'dotenv';
 import * as readline from 'readline';
 
@@ -92,12 +94,19 @@ async function transferAuthority(
         }
 
         // 获取当前 Authority 钱包
-        const authorityPrivateKey = process.env.SOLANA_PRIVATE_KEY;
-        if (!authorityPrivateKey) {
-            throw new Error("SOLANA_PRIVATE_KEY 环境变量未设置");
+        const keypairPath = path.join(process.env.HOME || '', '.config/solana/id.json');
+        let currentAuthority: Keypair;
+        
+        if (fs.existsSync(keypairPath)) {
+            const secretKey = JSON.parse(fs.readFileSync(keypairPath, 'utf-8'));
+            currentAuthority = Keypair.fromSecretKey(Uint8Array.from(secretKey));
+        } else {
+            const authorityPrivateKey = process.env.SOLANA_PRIVATE_KEY;
+            if (!authorityPrivateKey) {
+                throw new Error("SOLANA_PRIVATE_KEY 环境变量未设置，且未找到 ~/.config/solana/id.json");
+            }
+            currentAuthority = Keypair.fromSecretKey(bs58.decode(authorityPrivateKey));
         }
-
-        const currentAuthority = Keypair.fromSecretKey(bs58.decode(authorityPrivateKey));
         console.log(`🔑 当前 Authority: ${currentAuthority.publicKey.toString()}`);
 
         // 验证新 Authority 地址

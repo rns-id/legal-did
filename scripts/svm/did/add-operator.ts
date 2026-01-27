@@ -16,6 +16,8 @@ import {
     ConfirmOptions
 } from '@solana/web3.js';
 import * as bs58 from 'bs58';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { getNetworkConfig, getExplorerLink, NetworkConfig } from '../../config';
 
@@ -51,11 +53,20 @@ export class OperatorManager {
     
     /**
      * 获取 Authority 钱包
+     * 优先从 Solana CLI 配置的 keypair 文件读取，否则从环境变量读取
      */
     private getAuthorityWallet(): Keypair {
+        // 优先从 Solana CLI 配置的 keypair 文件读取
+        const keypairPath = path.join(process.env.HOME || '', '.config/solana/id.json');
+        if (fs.existsSync(keypairPath)) {
+            const secretKey = JSON.parse(fs.readFileSync(keypairPath, 'utf-8'));
+            return Keypair.fromSecretKey(Uint8Array.from(secretKey));
+        }
+        
+        // 否则从环境变量读取
         const authorityPrivateKey = process.env.SOLANA_PRIVATE_KEY;
         if (!authorityPrivateKey) {
-            throw new Error("SOLANA_PRIVATE_KEY 环境变量未设置");
+            throw new Error("SOLANA_PRIVATE_KEY 环境变量未设置，且未找到 ~/.config/solana/id.json");
         }
         
         return Keypair.fromSecretKey(bs58.decode(authorityPrivateKey));
