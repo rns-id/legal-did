@@ -1,0 +1,26 @@
+Program Upgrade Authority 转移记录
+==================================
+转移时间: $(date)
+网络: Devnet
+
+程序信息:
+---------
+Program ID: BE6yuzEjzapwBEQ9RoAFzG72XZzb17JuWWqhecFHdEQa
+旧 Authority: 8bsJcfGRyFWUEzS4bQfADTVBjReUm3YH89x1QY1qp3gd
+新 Authority: wkxCmw6rzM8xeUNhzPhWtWCwp6VoE4S81ymNDhqMWud (Squads 多签)
+
+验证结果:
+---------
+✅ Authority 已成功转移到 Squads 多签钱包
+
+浏览器链接:
+-----------
+Program: https://explorer.solana.com/address/BE6yuzEjzapwBEQ9RoAFzG72XZzb17JuWWqhecFHdEQa?cluster=devnet
+Squads: https://devnet.squads.so/
+
+下一步操作:
+-----------
+1. 升级程序时，运行: ./scripts/svm/upgrade-with-squads.sh
+2. 在 Squads 界面创建升级提案
+3. 多签成员投票并执行
+4. 查看详细文档: docs/deployment/多签升级操作指南.md
