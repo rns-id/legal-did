@@ -78,6 +78,9 @@ tests/utils/keypairs
 
 docs/
 *.md
+!SQUADS_MULTISIG_REPORT.md
+!SQUADS_ADMIN_GUIDE.md
+!SQUADS_CONTROL_DIAGRAM.excalidraw
 
 # Hardhat
 cache
