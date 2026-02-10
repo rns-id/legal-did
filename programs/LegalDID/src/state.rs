@@ -74,21 +74,36 @@ impl ProjectAccount {
 
 #[derive(Accounts)]
 pub struct SetBaseURI<'info> {
-    #[account(mut, has_one = authority)]
+    #[account(
+        mut,
+        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
+        bump = non_transferable_project.bump,
+        has_one = authority
+    )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
     pub authority: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct SetFeeRecipient<'info> {
-    #[account(mut, has_one = authority)]
+    #[account(
+        mut,
+        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
+        bump = non_transferable_project.bump,
+        has_one = authority
+    )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
     pub authority: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct SetFundDestination<'info> {
-    #[account(mut, has_one = authority)]
+    #[account(
+        mut,
+        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
+        bump = non_transferable_project.bump,
+        has_one = authority
+    )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
     pub authority: Signer<'info>,
 }
@@ -102,6 +117,8 @@ pub struct SetMintPriceContext<'info> {
     pub authority: Signer<'info>,
     #[account(
         mut,
+        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
+        bump = non_transferable_project.bump,
         constraint = non_transferable_project.is_admin_or_operator(&authority.key()) @ crate::error::ErrorCode::Unauthorized
     )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
@@ -114,6 +131,8 @@ pub struct ManageOperator<'info> {
     pub authority: Signer<'info>,
     #[account(
         mut,
+        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
+        bump = non_transferable_project.bump,
         constraint = non_transferable_project.authority == authority.key() @ crate::error::ErrorCode::Unauthorized
     )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
@@ -126,6 +145,8 @@ pub struct TransferAuthority<'info> {
     pub authority: Signer<'info>,
     #[account(
         mut,
+        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
+        bump = non_transferable_project.bump,
         constraint = non_transferable_project.authority == authority.key() @ crate::error::ErrorCode::Unauthorized
     )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
@@ -138,6 +159,8 @@ pub struct AdminOrOperatorAction<'info> {
     pub authority: Signer<'info>,
     #[account(
         mut,
+        seeds = [NON_TRANSFERABLE_PROJECT_PREFIX.as_bytes()],
+        bump = non_transferable_project.bump,
         constraint = non_transferable_project.is_admin_or_operator(&authority.key()) @ crate::error::ErrorCode::Unauthorized
     )]
     pub non_transferable_project: Box<Account<'info, ProjectAccount>>,
